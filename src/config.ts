@@ -6,6 +6,8 @@ export interface WeddingConfig {
   locationName: string;
   locationAddress: string;
   googleMapsUrl: string;
+  groomGiftQrCode: string;
+  brideGiftQrCode: string;
   heroImage: string;
   storyImage: string;
   galleryImages: string[];
@@ -20,6 +22,8 @@ export const weddingConfig: WeddingConfig = {
   locationName: "The Grand Palace",
   locationAddress: "123 Wedding St, Love City, Nghệ An",
   googleMapsUrl: "https://goo.gl/maps/example",
+  groomGiftQrCode: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Groom%20Bank%20Info%20or%20payment%20link",
+  brideGiftQrCode: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Bride%20Bank%20Info%20or%20payment%20link",
   heroImage: "/data/1JD0URKE8_6FLIUL.JPG",
   storyImage: "/data/1JDID6VFI_6FLIUL.JPG",
   galleryImages: [

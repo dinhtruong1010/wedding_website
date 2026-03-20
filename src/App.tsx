@@ -297,25 +297,36 @@ const PhotoGallery = () => {
 const Gifts = () => {
   return (
     <section id="gifts" className="py-24 bg-[#f7ece1] px-6">
-      <div className="max-w-3xl mx-auto text-center space-y-10">
+      <div className="max-w-6xl mx-auto text-center space-y-12">
         <div className="space-y-4">
           <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">Registry</span>
           <h2 className="font-headline text-4xl text-on-surface">A Note on Gifts</h2>
           <p className="font-body text-on-surface-variant leading-relaxed text-lg">
-            Your presence at our wedding is the greatest gift of all. However, if you wish to honor us with a gift, a contribution towards our future home or honeymoon fund would be greatly appreciated.
+            Your presence at our wedding is the greatest gift of all. If you wish to contribute, scan one of the QR codes below for the groom or bride.
           </p>
         </div>
 
-        <div className="relative inline-block p-4 bg-white rounded-2xl shadow-xl border border-primary/10">
-          <div className="p-10 border-2 border-dashed border-primary/20 rounded-xl flex flex-col items-center">
-            <div className="w-48 h-48 bg-surface-container-low flex items-center justify-center rounded-lg">
-              <div className="w-32 h-32 grid grid-cols-4 gap-2 opacity-40">
-                {[...Array(16)].map((_, i) => (
-                  <div key={i} className={`rounded-sm ${i % 3 === 0 ? 'bg-primary' : 'bg-primary/20'}`}></div>
-                ))}
-              </div>
-            </div>
-            <p className="mt-6 font-label text-xs uppercase tracking-widest text-primary font-bold">Scan to Give</p>
+        <div className="grid sm:grid-cols-2 gap-8">
+          <div className="bg-white p-8 rounded-2xl shadow-xl border border-primary/10">
+            <h3 className="font-headline text-2xl text-secondary mb-4">Groom Gift QR</h3>
+            <img
+              src={weddingConfig.groomGiftQrCode}
+              alt="Groom gift QR code"
+              className="mx-auto w-64 h-64 object-contain rounded-lg border border-primary/20"
+              referrerPolicy="no-referrer"
+            />
+            <p className="mt-4 text-sm text-on-surface-variant">Scan to send a gift to {weddingConfig.groomName}.</p>
+          </div>
+
+          <div className="bg-white p-8 rounded-2xl shadow-xl border border-primary/10">
+            <h3 className="font-headline text-2xl text-secondary mb-4">Bride Gift QR</h3>
+            <img
+              src={weddingConfig.brideGiftQrCode}
+              alt="Bride gift QR code"
+              className="mx-auto w-64 h-64 object-contain rounded-lg border border-primary/20"
+              referrerPolicy="no-referrer"
+            />
+            <p className="mt-4 text-sm text-on-surface-variant">Scan to send a gift to {weddingConfig.brideName}.</p>
           </div>
         </div>
       </div>
