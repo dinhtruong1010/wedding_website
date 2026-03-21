@@ -6,8 +6,21 @@ import {defineConfig, loadEnv} from 'vite';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
+
+  // Determine base path based on deployment platform
+  let base = '/';
+  if (mode === 'production') {
+    if (process.env.VERCEL_URL) {
+      // Vercel deployment - use root path
+      base = '/';
+    } else {
+      // GitHub Pages deployment
+      base = '/wedding_website/';
+    }
+  }
+
   return {
-    base: mode === 'production' ? '/wedding_website/' : '/',
+    base,
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
