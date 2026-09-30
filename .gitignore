@@ -4,6 +4,7 @@ node_modules/
 # Build output
 build/
 dist/
+apps/*/dist/
 dist-v2/
 dist-v3/
 coverage/
