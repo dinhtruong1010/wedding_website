@@ -1,8 +1,29 @@
+# Dependencies
 node_modules/
+
+# Build output
 build/
 dist/
+dist-v2/
+dist-v3/
 coverage/
-.DS_Store
-*.log
+
+# Local environments
+venv/
+.venv/
+env/
 .env*
 !.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

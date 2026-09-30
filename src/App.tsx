@@ -1,13 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, Heart, Calendar, Clock, MapPin, Utensils, Send, Quote, ChevronDown } from 'lucide-react';
+import { Menu, X, Heart, Calendar, Clock, MapPin, Quote, ChevronDown } from 'lucide-react';
 import { weddingConfig } from './config';
+import { ResponsiveImage, ResponsivePicture, ResponsiveGalleryImage } from './components/ResponsiveImage';
+import { Language, languageLabels, localeByLanguage, translations } from './i18n';
 
 // --- Components ---
 
-const Navbar = () => {
+interface LocalizedProps {
+  language: Language;
+}
+
+interface NavbarProps extends LocalizedProps {
+  onLanguageChange: (language: Language) => void;
+}
+
+const formatWeddingDate = (
+  language: Language,
+  options: Intl.DateTimeFormatOptions,
+) => new Date(weddingConfig.weddingDate).toLocaleDateString(localeByLanguage[language], options);
+
+const LanguageSwitcher = ({ language, onLanguageChange }: NavbarProps) => {
+  const t = translations[language];
+
+  return (
+    <div className="flex items-center gap-1 rounded-full bg-white/15 p-1 backdrop-blur-sm" aria-label={t.language.label}>
+      {(['vi', 'en'] as Language[]).map((item) => {
+        const isActive = item === language;
+
+        return (
+          <button
+            key={item}
+            type="button"
+            onClick={() => onLanguageChange(item)}
+            className={`h-8 min-w-10 rounded-full px-3 font-label text-xs font-bold transition-all ${
+              isActive ? 'bg-white text-primary shadow-sm' : 'text-current hover:bg-white/15'
+            }`}
+            aria-pressed={isActive}
+          >
+            {languageLabels[item]}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+const Navbar = ({ language, onLanguageChange }: NavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const t = translations[language];
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -16,11 +58,11 @@ const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: 'Our Story', href: '#story' },
-    { name: 'Wedding Details', href: '#details' },
-    { name: 'Gallery', href: '#gallery' },
-    { name: 'Gifts', href: '#gifts' },
-    { name: 'Wishes', href: '#wishes' },
+    { name: t.nav.story, href: '#story' },
+    { name: t.nav.details, href: '#details' },
+    { name: t.nav.gallery, href: '#gallery' },
+    { name: t.nav.gifts, href: '#gifts' },
+    { name: t.nav.wishes, href: '#wishes' },
   ];
 
   return (
@@ -41,8 +83,11 @@ const Navbar = () => {
               {link.name}
             </a>
           ))}
+          <div className={isScrolled ? 'text-on-surface' : 'text-white'}>
+            <LanguageSwitcher language={language} onLanguageChange={onLanguageChange} />
+          </div>
           <button className="gold-foil px-8 py-2 rounded-xl text-white font-headline italic hover:scale-105 transition-transform shadow-md">
-            RSVP
+            {t.nav.rsvp}
           </button>
         </div>
 
@@ -71,8 +116,11 @@ const Navbar = () => {
                 {link.name}
               </a>
             ))}
+            <div className="text-on-surface">
+              <LanguageSwitcher language={language} onLanguageChange={onLanguageChange} />
+            </div>
             <button className="gold-foil px-10 py-3 rounded-xl text-white font-headline italic">
-              RSVP
+              {t.nav.rsvp}
             </button>
           </motion.div>
         )}
@@ -81,15 +129,20 @@ const Navbar = () => {
   );
 };
 
-const Hero = () => {
+const Hero = ({ language }: LocalizedProps) => {
+  const t = translations[language];
+
   return (
-    <section className="relative h-screen w-full flex items-center justify-center text-center overflow-hidden">
-      <div className="absolute inset-0 z-0">
-        <img
-          src={weddingConfig.heroImage}
-          alt={`${weddingConfig.groomName} and ${weddingConfig.brideName}`}
-          className="w-full h-full object-cover"
-          referrerPolicy="no-referrer"
+    <section className="hero-section relative w-full flex items-center justify-center text-center overflow-hidden">
+      <div className="absolute inset-0 z-0 w-full h-full">
+        <ResponsivePicture
+          mobileSrc={weddingConfig.heroImages.mobile}
+          tabletSrc={weddingConfig.heroImages.tablet}
+          desktopSrc={weddingConfig.heroImages.desktop}
+          alt={t.hero.alt}
+          className="hero-image w-full h-full"
+          objectFit="cover"
+          priority={true}
         />
         <div className="absolute inset-0 bg-black/30"></div>
       </div>
@@ -104,10 +157,10 @@ const Hero = () => {
           {weddingConfig.groomName} & {weddingConfig.brideName}
         </h1>
         <p className="font-label uppercase tracking-[0.3em] text-white/90 text-sm md:text-lg mb-8">
-          {new Date(weddingConfig.weddingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} • {weddingConfig.locationName}
+          {formatWeddingDate(language, { month: 'long', day: 'numeric', year: 'numeric' })} • {weddingConfig.locationName}
         </p>
         <p className="font-headline text-xl md:text-2xl text-white italic mb-12 max-w-2xl mx-auto leading-relaxed">
-          "We are getting married and would love to celebrate with you."
+          "{t.hero.intro}"
         </p>
         <motion.a
           href="#story"
@@ -115,7 +168,7 @@ const Hero = () => {
           transition={{ repeat: Infinity, duration: 2 }}
           className="inline-flex flex-col items-center gap-4 text-white hover:opacity-80 transition-opacity"
         >
-          <span className="font-label uppercase tracking-widest text-xs">View Our Story</span>
+          <span className="font-label uppercase tracking-widest text-xs">{t.hero.cta}</span>
           <ChevronDown size={32} />
         </motion.a>
       </motion.div>
@@ -129,24 +182,9 @@ const Hero = () => {
   );
 };
 
-const OurStory = () => {
-  const timeline = [
-    {
-      title: 'The First Meeting',
-      date: 'MAY 2021',
-      description: 'A chance encounter at City Lights Bookstore that lasted until closing time.',
-    },
-    {
-      title: 'The First Trip',
-      date: 'AUGUST 2022',
-      description: 'Road tripping through the Pacific Northwest with nothing but a paper map and a sense of wonder.',
-    },
-    {
-      title: 'The Proposal',
-      date: 'DECEMBER 2023',
-      description: 'Under the twinkling lights of Union Square, Julian asked the question that changed everything.',
-    },
-  ];
+const OurStory = ({ language }: LocalizedProps) => {
+  const t = translations[language];
+  const timeline = t.story.timeline;
 
   return (
     <section id="story" className="py-24 md:py-32 px-6 bg-surface">
@@ -159,11 +197,11 @@ const OurStory = () => {
             className="relative"
           >
             <div className="absolute -top-6 -left-6 w-full h-full border border-primary/20 rounded-xl"></div>
-            <img
+            <ResponsiveImage
               src={weddingConfig.storyImage}
-              alt="Our Story"
-              className="relative z-10 w-full h-[500px] md:h-[700px] object-cover asymmetric-img shadow-2xl"
-              referrerPolicy="no-referrer"
+              alt={t.story.imageAlt}
+              className="relative z-10 w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[700px] asymmetric-img shadow-2xl"
+              objectFit="cover"
             />
           </motion.div>
 
@@ -174,11 +212,11 @@ const OurStory = () => {
             className="space-y-12"
           >
             <div className="space-y-4">
-              <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">A Journey of Love</span>
-              <h2 className="font-headline text-4xl md:text-6xl text-on-surface">Our Story</h2>
+              <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">{t.story.eyebrow}</span>
+              <h2 className="font-headline text-4xl md:text-6xl text-on-surface">{t.story.title}</h2>
             </div>
             <p className="font-body text-lg text-on-surface-variant leading-relaxed italic">
-              {weddingConfig.story}
+              {t.story.body}
             </p>
 
             <div className="space-y-10 relative before:absolute before:left-[11px] before:top-4 before:bottom-4 before:w-[1px] before:bg-outline-variant/30">
@@ -200,31 +238,27 @@ const OurStory = () => {
   );
 };
 
-const WeddingDetails = () => {
+const WeddingDetails = ({ language }: LocalizedProps) => {
+  const t = translations[language];
   const details = [
     {
       icon: <Calendar className="text-secondary" />,
-      title: 'The Date',
-      content: new Date(weddingConfig.weddingDate).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }),
-      sub: 'SAVE THE DATE',
+      title: t.details.dateTitle,
+      content: formatWeddingDate(language, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }),
+      sub: t.details.dateSub,
     },
     {
       icon: <Clock className="text-secondary" />,
-      title: 'The Time',
-      content: `Ceremony: ${weddingConfig.weddingTime}`,
-      sub: 'Reception to follow',
+      title: t.details.timeTitle,
+      content: weddingConfig.weddingTime,
+      sub: t.details.timeSub,
     },
     {
       icon: <MapPin className="text-secondary" />,
-      title: 'Location',
+      title: t.details.locationTitle,
       content: weddingConfig.locationName,
       sub: weddingConfig.locationAddress,
-    },
-    {
-      icon: <Utensils className="text-secondary" />,
-      title: 'Reception',
-      content: 'Dinner & Dancing',
-      sub: 'At the same venue',
+      href: weddingConfig.googleMapsUrl,
     },
   ];
 
@@ -232,11 +266,11 @@ const WeddingDetails = () => {
     <section id="details" className="py-24 bg-surface-container-low px-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16 space-y-4">
-          <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">The Celebration</span>
-          <h2 className="font-headline text-4xl md:text-5xl text-on-surface">Wedding Details</h2>
+          <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">{t.details.eyebrow}</span>
+          <h2 className="font-headline text-4xl md:text-5xl text-on-surface">{t.details.title}</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {details.map((item, index) => (
             <motion.div
               key={index}
@@ -249,6 +283,16 @@ const WeddingDetails = () => {
               <h3 className="font-headline text-2xl mb-3">{item.title}</h3>
               <p className="text-on-surface-variant mb-1">{item.content}</p>
               <p className="font-label text-[10px] tracking-widest text-primary uppercase mt-4">{item.sub}</p>
+              {'href' in item && item.href ? (
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-5 inline-flex rounded-full border border-primary/20 px-5 py-2 font-label text-xs font-bold uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white"
+                >
+                  {t.details.viewMap}
+                </a>
+              ) : null}
             </motion.div>
           ))}
         </div>
@@ -257,15 +301,16 @@ const WeddingDetails = () => {
   );
 };
 
-const PhotoGallery = () => {
+const PhotoGallery = ({ language }: LocalizedProps) => {
   const images = weddingConfig.galleryImages;
+  const t = translations[language];
 
   return (
     <section id="gallery" className="py-24 px-6 bg-surface">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16 space-y-4">
-          <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">Memories Captured</span>
-          <h2 className="font-headline text-4xl md:text-5xl text-on-surface">Photo Gallery</h2>
+          <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">{t.gallery.eyebrow}</span>
+          <h2 className="font-headline text-4xl md:text-5xl text-on-surface">{t.gallery.title}</h2>
         </div>
 
         <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
@@ -277,11 +322,10 @@ const PhotoGallery = () => {
               viewport={{ once: true }}
               className={`relative group overflow-hidden ${index % 2 === 0 ? 'rounded-xl' : 'asymmetric-img'}`}
             >
-              <img
+              <ResponsiveGalleryImage
                 src={src}
-                alt={`Gallery ${index}`}
+                alt={`${t.gallery.altPrefix} ${index + 1}`}
                 className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-110"
-                referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Heart className="text-white" size={32} />
@@ -294,39 +338,41 @@ const PhotoGallery = () => {
   );
 };
 
-const Gifts = () => {
+const Gifts = ({ language }: LocalizedProps) => {
+  const t = translations[language];
+
   return (
     <section id="gifts" className="py-24 bg-[#f7ece1] px-6">
       <div className="max-w-6xl mx-auto text-center space-y-12">
         <div className="space-y-4">
-          <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">Registry</span>
-          <h2 className="font-headline text-4xl text-on-surface">A Note on Gifts</h2>
+          <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">{t.gifts.eyebrow}</span>
+          <h2 className="font-headline text-4xl text-on-surface">{t.gifts.title}</h2>
           <p className="font-body text-on-surface-variant leading-relaxed text-lg">
-            Your presence at our wedding is the greatest gift of all. If you wish to contribute, scan one of the QR codes below for the groom or bride.
+            {t.gifts.body}
           </p>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-8">
           <div className="bg-white p-8 rounded-2xl shadow-xl border border-primary/10">
-            <h3 className="font-headline text-2xl text-secondary mb-4">Groom Gift QR</h3>
-            <img
+            <h3 className="font-headline text-2xl text-secondary mb-4">{t.gifts.groomTitle}</h3>
+            <ResponsiveImage
               src={weddingConfig.groomGiftQrCode}
-              alt="Groom gift QR code"
-              className="mx-auto w-64 h-64 object-contain rounded-lg border border-primary/20"
-              referrerPolicy="no-referrer"
+              alt={t.gifts.groomAlt}
+              className="mx-auto w-48 sm:w-56 md:w-64 h-48 sm:h-56 md:h-64 object-contain rounded-lg border border-primary/20"
+              objectFit="contain"
             />
-            <p className="mt-4 text-sm text-on-surface-variant">Scan to send a gift to {weddingConfig.groomName}.</p>
+            <p className="mt-4 text-sm text-on-surface-variant">{t.gifts.groomNote} {weddingConfig.groomName}.</p>
           </div>
 
           <div className="bg-white p-8 rounded-2xl shadow-xl border border-primary/10">
-            <h3 className="font-headline text-2xl text-secondary mb-4">Bride Gift QR</h3>
-            <img
+            <h3 className="font-headline text-2xl text-secondary mb-4">{t.gifts.brideTitle}</h3>
+            <ResponsiveImage
               src={weddingConfig.brideGiftQrCode}
-              alt="Bride gift QR code"
-              className="mx-auto w-64 h-64 object-contain rounded-lg border border-primary/20"
-              referrerPolicy="no-referrer"
+              alt={t.gifts.brideAlt}
+              className="mx-auto w-48 sm:w-56 md:w-64 h-48 sm:h-56 md:h-64 object-contain rounded-lg border border-primary/20"
+              objectFit="contain"
             />
-            <p className="mt-4 text-sm text-on-surface-variant">Scan to send a gift to {weddingConfig.brideName}.</p>
+            <p className="mt-4 text-sm text-on-surface-variant">{t.gifts.brideNote} {weddingConfig.brideName}.</p>
           </div>
         </div>
       </div>
@@ -334,13 +380,9 @@ const Gifts = () => {
   );
 };
 
-const Guestbook = () => {
-  const wishes = [
-    { name: 'Sarah & Mark', message: "Wishing you both a lifetime of happiness and love. Can't wait to celebrate!" },
-    { name: 'Aunt Clara', message: "The most beautiful couple. May your journey be filled with joy." },
-    { name: 'Leo', message: "Cheers to the new beginning! See you at the dance floor." },
-    { name: 'The Smiths', message: "Love is patient, love is kind. So happy for both of you!" },
-  ];
+const Guestbook = ({ language }: LocalizedProps) => {
+  const t = translations[language];
+  const wishes = t.guestbook.wishes;
 
   return (
     <section id="wishes" className="py-24 px-6 bg-surface">
@@ -348,36 +390,36 @@ const Guestbook = () => {
         <div className="grid lg:grid-cols-2 gap-20">
           <div className="space-y-10">
             <div className="space-y-4">
-              <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">Guestbook</span>
-              <h2 className="font-headline text-4xl text-on-surface">Leave a Wish</h2>
-              <p className="text-on-surface-variant italic">Share your thoughts and blessings with the happy couple.</p>
+              <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">{t.guestbook.eyebrow}</span>
+              <h2 className="font-headline text-4xl text-on-surface">{t.guestbook.title}</h2>
+              <p className="text-on-surface-variant italic">{t.guestbook.intro}</p>
             </div>
 
             <form className="space-y-8 bg-surface-container-low p-10 rounded-xl soft-petal-shadow">
               <div className="space-y-2">
-                <label className="block font-label text-xs uppercase tracking-widest text-primary font-bold">Your Name</label>
+                <label className="block font-label text-xs uppercase tracking-widest text-primary font-bold">{t.guestbook.nameLabel}</label>
                 <input
                   type="text"
-                  placeholder="Enter your name"
+                  placeholder={t.guestbook.namePlaceholder}
                   className="w-full bg-transparent border-0 border-b border-outline-variant/30 focus:ring-0 focus:border-primary px-0 py-3 transition-all"
                 />
               </div>
               <div className="space-y-2">
-                <label className="block font-label text-xs uppercase tracking-widest text-primary font-bold">Your Message</label>
+                <label className="block font-label text-xs uppercase tracking-widest text-primary font-bold">{t.guestbook.messageLabel}</label>
                 <textarea
-                  placeholder="Write something beautiful..."
+                  placeholder={t.guestbook.messagePlaceholder}
                   rows={4}
                   className="w-full bg-transparent border-0 border-b border-outline-variant/30 focus:ring-0 focus:border-primary px-0 py-3 transition-all"
                 ></textarea>
               </div>
               <button className="w-full gold-foil py-4 rounded-xl text-white font-label uppercase tracking-widest font-bold shadow-lg hover:scale-[1.02] transition-transform">
-                Send Wish
+                {t.guestbook.submit}
               </button>
             </form>
           </div>
 
           <div className="space-y-8">
-            <h3 className="font-headline text-2xl text-on-surface mb-8">Recent Wishes</h3>
+            <h3 className="font-headline text-2xl text-on-surface mb-8">{t.guestbook.recent}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {wishes.map((wish, index) => (
                 <motion.div
@@ -401,32 +443,44 @@ const Guestbook = () => {
   );
 };
 
-const Footer = () => {
+const Footer = ({ language }: LocalizedProps) => {
+  const t = translations[language];
+
   return (
     <footer className="py-16 bg-surface-container-low text-center space-y-8">
       <div className="font-display text-4xl text-primary">{weddingConfig.groomName} & {weddingConfig.brideName}</div>
       <div className="flex justify-center gap-12">
-        <a href="#" className="font-label text-xs uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">Privacy Policy</a>
-        <a href="#" className="font-label text-xs uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">Contact Us</a>
+        <a href="#" className="font-label text-xs uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">{t.footer.privacy}</a>
+        <a href="#" className="font-label text-xs uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">{t.footer.contact}</a>
       </div>
       <div className="font-label text-xs uppercase tracking-[0.2em] text-primary/60">
-        {weddingConfig.groomName} & {weddingConfig.brideName} • {new Date(weddingConfig.weddingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+        {weddingConfig.groomName} & {weddingConfig.brideName} • {formatWeddingDate(language, { month: 'long', day: 'numeric', year: 'numeric' })}
       </div>
     </footer>
   );
 };
 
 export default function App() {
+  const [language, setLanguage] = useState<Language>(() => {
+    const savedLanguage = window.localStorage.getItem('wedding-language');
+    return savedLanguage === 'en' || savedLanguage === 'vi' ? savedLanguage : 'vi';
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem('wedding-language', language);
+    document.documentElement.lang = language;
+  }, [language]);
+
   return (
     <div className="min-h-screen">
-      <Navbar />
-      <Hero />
-      <OurStory />
-      <WeddingDetails />
-      <PhotoGallery />
-      <Gifts />
-      <Guestbook />
-      <Footer />
+      <Navbar language={language} onLanguageChange={setLanguage} />
+      <Hero language={language} />
+      <OurStory language={language} />
+      <WeddingDetails language={language} />
+      <PhotoGallery language={language} />
+      <Gifts language={language} />
+      <Guestbook language={language} />
+      <Footer language={language} />
     </div>
   );
 }

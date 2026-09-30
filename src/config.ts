@@ -8,10 +8,13 @@ export interface WeddingConfig {
   googleMapsUrl: string;
   groomGiftQrCode: string;
   brideGiftQrCode: string;
-  heroImage: string;
+  heroImages: {
+    mobile: string;
+    tablet: string;
+    desktop: string;
+  };
   storyImage: string;
   galleryImages: string[];
-  story: string;
 }
 
 export const weddingConfig: WeddingConfig = {
@@ -24,7 +27,11 @@ export const weddingConfig: WeddingConfig = {
   googleMapsUrl: "https://goo.gl/maps/example",
   groomGiftQrCode: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Groom%20Bank%20Info%20or%20payment%20link",
   brideGiftQrCode: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Bride%20Bank%20Info%20or%20payment%20link",
-  heroImage: "/data/1JD0URKE8_6FLIUL.JPG",
+  heroImages: {
+    mobile: "/data/hero-mobile.jpg",
+    tablet: "/data/hero-tablet.jpg",
+    desktop: "/data/hero-desktop.jpg",
+  },
   storyImage: "/data/1JDID6VFI_6FLIUL.JPG",
   galleryImages: [
     "/data/IMG_7737.JPG",
@@ -33,5 +40,4 @@ export const weddingConfig: WeddingConfig = {
     "/data/IMG_9526.JPG",
     "/data/IMG_9527.JPG",
   ],
-  story: "Our journey began five years ago, and now we're ready to start our forever together. We can't wait to celebrate this special day with all of you!",
 };
