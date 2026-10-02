@@ -54,7 +54,16 @@ Edit [apps/v1/src/config.ts](apps/v1/src/config.ts) for V1 names, wedding date, 
 
 Edit [apps/v1/src/i18n.ts](apps/v1/src/i18n.ts) for V1 Vietnamese and English page copy.
 
-Edit `apps/v2/src/content.ts` or `apps/v3/src/content.ts` for the corresponding version. Add images and audio to that version's `public/` directory.
+Edit [apps/v2/src/config.ts](apps/v2/src/config.ts) or [apps/v3/src/config.ts](apps/v3/src/config.ts) for the corresponding version's editable wedding information:
+
+- Couple names and monogram
+- Wedding date and time (`event.date` uses ISO format with timezone)
+- Guest arrival time (V3)
+- Venue, address, Google Maps URL, and optional map embed URL
+- Family information
+- Photos, gallery, audio, and gift QR URLs
+
+Edit `apps/v2/src/content.ts` or `apps/v3/src/content.ts` only when changing page copy or translations. Add images and audio to that version's `public/` directory.
 
 ## Useful Commands
 

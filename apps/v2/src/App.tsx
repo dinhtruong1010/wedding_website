@@ -41,6 +41,11 @@ function App() {
   }, []);
 
   const dateFormatter = useMemo(() => new Intl.DateTimeFormat(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }), [language]);
+  const dateParts = useMemo(() => {
+    const parts = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).formatToParts(new Date(wedding.event.date));
+    return Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  }, []);
+  const timeLabel = useMemo(() => new Intl.DateTimeFormat(language === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit', hour12: language === 'en' }).format(new Date(wedding.event.date)), [language]);
 
   const handleRsvp = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -109,8 +114,8 @@ function App() {
         <section className="section details-section" id="details">
           <SectionIntro eyebrow={t.details.eyebrow} title={t.details.title} />
           <div className="details-layout">
-            <div className="date-panel"><CalendarDays size={22} /><p className="date-large">20<span>12</span><small>2026</small></p><p>{t.details.date}</p></div>
-            <div className="event-panel"><div className="event-row"><Clock3 /><div><small>{t.details.timeLabel}</small><strong>{t.details.time}</strong></div></div><div className="event-row"><MapPin /><div><small>{t.details.venueLabel}</small><strong>{wedding.event.venue}</strong><span>{wedding.event.address}</span></div></div><div className="event-actions"><a href={wedding.event.mapUrl} target="_blank" rel="noreferrer">{t.details.directions} <MapPin size={15} /></a><button onClick={() => downloadCalendar(language)}>{t.details.addCalendar} <CalendarDays size={15} /></button></div></div>
+            <div className="date-panel"><CalendarDays size={22} /><p className="date-large">{dateParts.day}<span>{dateParts.month}</span><small>{dateParts.year}</small></p><p>{dateFormatter.format(new Date(wedding.event.date))}</p></div>
+            <div className="event-panel"><div className="event-row"><Clock3 /><div><small>{t.details.timeLabel}</small><strong>{timeLabel}</strong></div></div><div className="event-row"><MapPin /><div><small>{t.details.venueLabel}</small><strong>{wedding.event.venue}</strong><span>{wedding.event.address}</span></div></div><div className="event-actions"><a href={wedding.event.mapUrl} target="_blank" rel="noreferrer">{t.details.directions} <MapPin size={15} /></a><button onClick={() => downloadCalendar(language)}>{t.details.addCalendar} <CalendarDays size={15} /></button></div></div>
           </div>
         </section>
 
@@ -150,7 +155,8 @@ function PhotoLightbox({ index, setIndex, language }: { index: number; setIndex:
 }
 
 function downloadCalendar(language: Language) {
-  const event = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART:20261220T100000Z\nSUMMARY:${wedding.couple.groom} & ${wedding.couple.bride} Wedding\nLOCATION:${wedding.event.venue}, ${wedding.event.address}\nEND:VEVENT\nEND:VCALENDAR`;
+  const calendarDate = wedding.event.date.replace(/[-:]/g, '').replace('.000', '');
+  const event = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART:${calendarDate}\nSUMMARY:${wedding.couple.groom} & ${wedding.couple.bride} Wedding\nLOCATION:${wedding.event.venue}, ${wedding.event.address}\nEND:VEVENT\nEND:VCALENDAR`;
   const blob = new Blob([event], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
