@@ -7,12 +7,12 @@ export const weddingConfig = {
   },
   event: {
     // ISO datetime with timezone. The countdown and calendar use this value.
-    date: '2026-12-20T17:00:00+07:00',
-    guestArrival: '17:00',
-    venue: 'The Grand Palace',
-    address: '123 Wedding St, Love City, Nghệ An',
-    mapUrl: 'https://goo.gl/maps/example',
-    mapEmbedUrl: '',
+    date: '2026-12-12T17:00:00+07:00',
+    guestArrival: '16:00',
+    venue: 'Casa de Ruby',
+    address: 'Casa de Ruby - Farmstay Erahouse, Ng. 64 P. Ng. Xuân Quảng, Gia Lâm, Hà Nội, Việt Nam',
+    mapUrl: 'https://maps.app.goo.gl/WuJeTN6ZSPzzkfqt6',
+    mapEmbedUrl: 'https://maps.app.goo.gl/WuJeTN6ZSPzzkfqt6',
   },
   families: {
     groom: { title: 'Nhà trai', parents: 'Ông ... & Bà ...', address: 'Nghệ An' },

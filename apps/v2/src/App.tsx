@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowDown, CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, Heart, Languages, MapPin, Menu, Music2, Volume2, VolumeX, X } from 'lucide-react';
 import { copy, Language, wedding } from './content';
@@ -29,6 +29,7 @@ function App() {
   const [musicPlaying, setMusicPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const t = copy[language];
+  const guest = useMemo(() => new URLSearchParams(window.location.search).get('to') || '', []);
 
   useEffect(() => {
     localStorage.setItem('wedding-v2-language', language);
@@ -75,8 +76,9 @@ function App() {
   return (
     <div className="v2-shell">
       <audio ref={audioRef} src={asset('audio/Audio.mp3')} loop preload="metadata" />
+      <PetalField />
       <AnimatePresence>
-        {!isOpen && <InvitationCover language={language} setLanguage={setLanguage} onOpen={startExperience} />}
+        {!isOpen && <InvitationCover language={language} setLanguage={setLanguage} guest={guest} onOpen={startExperience} />}
       </AnimatePresence>
 
       <header className={`v2-nav ${isOpen ? 'is-visible' : ''}`}>
@@ -115,7 +117,7 @@ function App() {
           <SectionIntro eyebrow={t.details.eyebrow} title={t.details.title} />
           <div className="details-layout">
             <div className="date-panel"><CalendarDays size={22} /><p className="date-large">{dateParts.day}<span>{dateParts.month}</span><small>{dateParts.year}</small></p><p>{dateFormatter.format(new Date(wedding.event.date))}</p></div>
-            <div className="event-panel"><div className="event-row"><Clock3 /><div><small>{t.details.timeLabel}</small><strong>{timeLabel}</strong></div></div><div className="event-row"><MapPin /><div><small>{t.details.venueLabel}</small><strong>{wedding.event.venue}</strong><span>{wedding.event.address}</span></div></div><div className="event-actions"><a href={wedding.event.mapUrl} target="_blank" rel="noreferrer">{t.details.directions} <MapPin size={15} /></a><button onClick={() => downloadCalendar(language)}>{t.details.addCalendar} <CalendarDays size={15} /></button></div></div>
+            <div className="event-panel"><div className="event-row"><Clock3 /><div><small>{t.details.timeLabel}</small><strong>{timeLabel}</strong>{wedding.event.guestArrival && <span>{t.details.guestArrivalLabel}: {wedding.event.guestArrival}</span>}</div></div><div className="event-row"><MapPin /><div><small>{t.details.venueLabel}</small><strong>{wedding.event.venue}</strong><span>{wedding.event.address}</span></div></div><div className="event-actions"><a href={wedding.event.mapUrl} target="_blank" rel="noreferrer">{t.details.directions} <MapPin size={15} /></a><button onClick={() => downloadCalendar(language)}>{t.details.addCalendar} <CalendarDays size={15} /></button></div></div>
           </div>
         </section>
 
@@ -136,9 +138,9 @@ function App() {
   );
 }
 
-function InvitationCover({ language, setLanguage, onOpen }: { language: Language; setLanguage: (language: Language) => void; onOpen: () => void }) {
+function InvitationCover({ language, setLanguage, guest, onOpen }: { language: Language; setLanguage: (language: Language) => void; guest: string; onOpen: () => void }) {
   const t = copy[language];
-  return <motion.div className="invitation-cover" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}><div className="cover-media" style={{ backgroundImage: `url('${asset(wedding.images.cover)}')` }} /><div className="cover-content"><p className="cover-monogram">{wedding.couple.shortMark}</p><p className="eyebrow eyebrow-light">{t.cover.kicker}</p><h2>{t.cover.title}</h2><p>{t.cover.subtitle}</p><button className="light-button" onClick={onOpen}>{t.cover.open} <ArrowDown size={16} /></button></div><div className="cover-language"><LanguageSwitch language={language} setLanguage={setLanguage} /></div></motion.div>;
+  return <motion.div className="invitation-cover" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.55 }}><div className="cover-media" style={{ backgroundImage: `url('${asset(wedding.images.cover)}')` }} /><div className="cover-veil" /><div className="cover-content"><p className="cover-names">{wedding.couple.groom} <span>&amp;</span> {wedding.couple.bride}</p><div className="cover-polaroid"><img src={asset(wedding.images.story)} alt="" /><span>Always</span><small>be with you</small></div><p className="cover-date">{new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(wedding.event.date))}</p>{guest && <p className="cover-guest">{language === 'vi' ? 'Thân mời' : 'Dear guest'} <strong>{guest}</strong></p>}<button className="light-button" onClick={onOpen}>{t.cover.open} <ArrowDown size={16} /></button></div><div className="cover-language"><LanguageSwitch language={language} setLanguage={setLanguage} /></div></motion.div>;
 }
 
 function LanguageSwitch({ language, setLanguage }: { language: Language; setLanguage: (language: Language) => void }) {
@@ -164,6 +166,19 @@ function downloadCalendar(language: Language) {
   link.download = language === 'vi' ? 'lich-cuoi.ics' : 'wedding.ics';
   link.click();
   URL.revokeObjectURL(url);
+}
+
+const petalStyles = Array.from({ length: 24 }, (_, index) => ({
+  '--petal-left': `${(index * 37) % 101}%`,
+  '--petal-delay': `${(index % 8) * -1.8}s`,
+  '--petal-duration': `${12 + (index % 7) * 1.5}s`,
+  '--petal-size': `${7 + (index % 4) * 2}px`,
+  '--petal-drift': `${-90 + (index % 9) * 24}px`,
+  '--petal-rotate': `${index * 47}deg`,
+})) as CSSProperties[];
+
+function PetalField() {
+  return <div className="petal-field" aria-hidden="true">{petalStyles.map((style, index) => <span className="petal" style={style} key={index} />)}</div>;
 }
 
 export default App;

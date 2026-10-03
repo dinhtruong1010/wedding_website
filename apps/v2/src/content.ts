@@ -21,7 +21,7 @@ export const copy = {
     },
     countdown: { days: 'Ngày', hours: 'Giờ', minutes: 'Phút', seconds: 'Giây', complete: 'Hôm nay là ngày vui của chúng mình' },
     details: {
-      eyebrow: 'Ngày chung đôi', title: 'Hẹn gặp bạn tại lễ cưới', date: 'Chủ nhật, ngày 20 tháng 12, 2026', time: '17:00', timeLabel: 'Làm lễ & khai tiệc', venueLabel: 'Địa điểm', directions: 'Chỉ đường', addCalendar: 'Lưu vào lịch',
+      eyebrow: 'Ngày chung đôi', title: 'Hẹn gặp bạn tại lễ cưới', timeLabel: 'Làm lễ & khai tiệc', guestArrivalLabel: 'Đón khách', venueLabel: 'Địa điểm', directions: 'Chỉ đường', addCalendar: 'Lưu vào lịch',
     },
     family: { eyebrow: 'Hai gia đình', title: 'Trân trọng kính mời', guests: 'Tới dự tiệc chung vui cùng gia đình chúng mình' },
     story: { eyebrow: 'Love story', title: 'Từ hôm nay, mình có nhau', body: 'Hành trình của chúng mình bắt đầu từ những điều giản dị. Cảm ơn bạn đã luôn hiện diện trong những cột mốc quan trọng và cùng chia sẻ niềm vui này.', milestone: 'Ngày chúng mình bắt đầu' },
@@ -35,7 +35,7 @@ export const copy = {
     nav: { story: 'Our story', details: 'Details', gallery: 'Gallery', rsvp: 'RSVP' },
     hero: { eyebrow: 'We are getting married', title: 'Dinh Truong & Thanh Nga', body: 'Happiness is finding someone to walk through ordinary days with, and making them memorable together.', cta: 'View wedding details' },
     countdown: { days: 'Days', hours: 'Hours', minutes: 'Minutes', seconds: 'Seconds', complete: 'Today is our special day' },
-    details: { eyebrow: 'The celebration', title: 'Save this date', date: 'Sunday, December 20, 2026', time: '5:00 PM', timeLabel: 'Ceremony & reception', venueLabel: 'Venue', directions: 'Get directions', addCalendar: 'Save to calendar' },
+    details: { eyebrow: 'The celebration', title: 'Save this date', timeLabel: 'Ceremony & reception', guestArrivalLabel: 'Guest arrival', venueLabel: 'Venue', directions: 'Get directions', addCalendar: 'Save to calendar' },
     family: { eyebrow: 'Our families', title: 'You are warmly invited', guests: 'To celebrate this joyful occasion with our families' },
     story: { eyebrow: 'Love story', title: 'From today, we have each other', body: 'Our journey began with simple moments. Thank you for being part of our important milestones and for sharing this celebration with us.', milestone: 'The day we began' },
     gallery: { eyebrow: 'Golden hour', title: 'A few moments of us', body: 'Some memories we would love to share with you.', close: 'Close photo' },
