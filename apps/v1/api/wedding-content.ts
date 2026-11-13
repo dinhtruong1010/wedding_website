@@ -1,3 +1,5 @@
+import { weddingContent } from "../config/wedding-content";
+
 type VercelRequest = { method?: string };
 type VercelResponse = {
   statusCode: number;
@@ -35,7 +37,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { weddingContent } = await import("../config/wedding-content");
     let config = { ...weddingContent };
     let blobLoaded = false;
     let neonLoaded = false;
