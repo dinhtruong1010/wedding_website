@@ -26,7 +26,9 @@ async function listAllBlobs() {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method && req.method !== "GET") {
-    return res.status(405).setHeader("Allow", "GET").json({ error: "Method not allowed" });
+    res.status(405);
+    res.setHeader("Allow", "GET");
+    return res.json({ error: "Method not allowed" });
   }
 
   let config = { ...weddingContent };
@@ -72,8 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  return res
-    .status(200)
-    .setHeader("Cache-Control", "no-store, max-age=0")
-    .json({ config, source: { blob: blobLoaded, neon: neonLoaded, galleryCount } });
+  res.status(200);
+  res.setHeader("Cache-Control", "no-store, max-age=0");
+  return res.json({ config, source: { blob: blobLoaded, neon: neonLoaded, galleryCount } });
 }
