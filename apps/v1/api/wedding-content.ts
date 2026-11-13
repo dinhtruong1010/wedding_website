@@ -2,9 +2,15 @@ import { weddingContent } from "../config/wedding-content";
 
 type VercelRequest = { method?: string };
 type VercelResponse = {
-  status: (code: number) => VercelResponse;
-  setHeader: (name: string, value: string) => VercelResponse;
-  json: (body: unknown) => void;
+  statusCode: number;
+  setHeader: (name: string, value: string) => void;
+  end: (body?: string) => void;
+};
+
+const sendJson = (res: VercelResponse, statusCode: number, body: unknown) => {
+  res.statusCode = statusCode;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.end(JSON.stringify(body));
 };
 
 const isImage = (pathname: string) => /\.(avif|gif|jpe?g|png|webp)$/i.test(pathname);
@@ -26,9 +32,8 @@ async function listAllBlobs() {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method && req.method !== "GET") {
-    res.status(405);
     res.setHeader("Allow", "GET");
-    return res.json({ error: "Method not allowed" });
+    return sendJson(res, 405, { error: "Method not allowed" });
   }
 
   let config = { ...weddingContent };
@@ -74,7 +79,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  res.status(200);
   res.setHeader("Cache-Control", "no-store, max-age=0");
-  return res.json({ config, source: { blob: blobLoaded, neon: neonLoaded, galleryCount } });
+  return sendJson(res, 200, { config, source: { blob: blobLoaded, neon: neonLoaded, galleryCount } });
 }
