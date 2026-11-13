@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, Heart, Calendar, Clock, MapPin, Quote, ChevronDown } from 'lucide-react';
+import { Menu, X, Heart, Calendar, Clock, MapPin, Quote, ChevronDown, Volume2, VolumeX } from 'lucide-react';
 import { weddingConfig } from './config';
 import { ResponsiveImage, ResponsivePicture, ResponsiveGalleryImage } from './components/ResponsiveImage';
 import { Language, languageLabels, localeByLanguage, translations } from './i18n';
@@ -129,7 +129,25 @@ const Navbar = ({ language, onLanguageChange }: NavbarProps) => {
   );
 };
 
-const Hero = ({ language }: LocalizedProps) => {
+interface AudioToggleProps {
+  language: Language;
+  isMuted: boolean;
+  onToggle: () => void;
+}
+
+const AudioToggle = ({ language, isMuted, onToggle }: AudioToggleProps) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    aria-label={isMuted ? (language === 'vi' ? 'Bật nhạc' : 'Turn music on') : language === 'vi' ? 'Tắt nhạc' : 'Turn music off'}
+    aria-pressed={!isMuted}
+    className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-white shadow-2xl transition-transform hover:scale-110"
+  >
+    {isMuted ? <VolumeX size={22} /> : <Volume2 size={22} />}
+  </button>
+);
+
+const Hero = ({ language, isMuted, onToggle }: LocalizedProps & Pick<AudioToggleProps, 'isMuted' | 'onToggle'>) => {
   const t = translations[language];
 
   return (
@@ -174,9 +192,7 @@ const Hero = ({ language }: LocalizedProps) => {
       </motion.div>
 
       <div className="absolute bottom-8 right-8 z-20">
-        <button className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform text-white">
-          <Heart fill="currentColor" size={24} />
-        </button>
+        <AudioToggle language={language} isMuted={isMuted} onToggle={onToggle} />
       </div>
     </section>
   );
@@ -301,8 +317,7 @@ const WeddingDetails = ({ language }: LocalizedProps) => {
   );
 };
 
-const PhotoGallery = ({ language }: LocalizedProps) => {
-  const images = weddingConfig.galleryImages;
+const PhotoGallery = ({ language, images }: LocalizedProps & { images: string[] }) => {
   const t = translations[language];
 
   return (
@@ -461,6 +476,9 @@ const Footer = ({ language }: LocalizedProps) => {
 };
 
 export default function App() {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [activeConfig, setActiveConfig] = useState(weddingConfig);
+  const [isMuted, setIsMuted] = useState(() => window.localStorage.getItem('wedding-audio-muted') === 'true');
   const [language, setLanguage] = useState<Language>(() => {
     const savedLanguage = window.localStorage.getItem('wedding-language');
     return savedLanguage === 'en' || savedLanguage === 'vi' ? savedLanguage : 'vi';
@@ -471,13 +489,40 @@ export default function App() {
     document.documentElement.lang = language;
   }, [language]);
 
+  useEffect(() => {
+    fetch('/api/wedding-content')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => payload?.config && setActiveConfig((current) => ({ ...current, ...payload.config })))
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem('wedding-audio-muted', String(isMuted));
+    if (audioRef.current) audioRef.current.muted = isMuted;
+  }, [isMuted]);
+
+  useEffect(() => {
+    const startAudio = () => {
+      if (!isMuted) audioRef.current?.play().catch(() => undefined);
+    };
+    window.addEventListener('pointerdown', startAudio, { once: true });
+    return () => window.removeEventListener('pointerdown', startAudio);
+  }, [isMuted]);
+
+  const toggleAudio = () => {
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    if (!nextMuted) audioRef.current?.play().catch(() => undefined);
+  };
+
   return (
     <div className="min-h-screen">
+      <audio ref={audioRef} src={activeConfig.audioUrl} loop preload="metadata" />
       <Navbar language={language} onLanguageChange={setLanguage} />
-      <Hero language={language} />
+      <Hero language={language} isMuted={isMuted} onToggle={toggleAudio} />
       <OurStory language={language} />
       <WeddingDetails language={language} />
-      <PhotoGallery language={language} />
+      <PhotoGallery language={language} images={activeConfig.galleryImages} />
       <Gifts language={language} />
       <Guestbook language={language} />
       <Footer language={language} />

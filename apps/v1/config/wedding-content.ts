@@ -1,0 +1,31 @@
+export interface WeddingContent {
+  groomName: string;
+  brideName: string;
+  weddingDate: string;
+  weddingTime: string;
+  locationName: string;
+  locationAddress: string;
+  googleMapsUrl: string;
+  groomGiftQrCode: string;
+  brideGiftQrCode: string;
+  heroImages: { mobile: string; tablet: string; desktop: string };
+  storyImage: string;
+  galleryImages: string[];
+  audioUrl: string;
+}
+
+export const weddingContent: WeddingContent = {
+  groomName: "Đình Trường",
+  brideName: "Thanh Ngà",
+  weddingDate: "2026-12-20",
+  weddingTime: "17:00",
+  locationName: "The Grand Palace",
+  locationAddress: "123 Wedding St, Love City, Nghệ An",
+  googleMapsUrl: "https://goo.gl/maps/example",
+  groomGiftQrCode: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Groom%20Bank%20Info%20or%20payment%20link",
+  brideGiftQrCode: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Bride%20Bank%20Info%20or%20payment%20link",
+  heroImages: { mobile: "/data/hero-mobile.jpg", tablet: "/data/hero-tablet.jpg", desktop: "/data/hero-desktop.jpg" },
+  storyImage: "/data/1JDID6VFI_6FLIUL.JPG",
+  galleryImages: ["/data/IMG_7737.JPG", "/data/IMG_7739.JPG", "/data/IMG_7740.JPG", "/data/IMG_9526.JPG", "/data/IMG_9527.JPG"],
+  audioUrl: "/audio/Audio.mp3",
+};
