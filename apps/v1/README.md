@@ -8,8 +8,10 @@ Use this naming convention for predictable updates:
 
 - `wedding/gallery/001.jpg`, `wedding/gallery/002.webp`, ... for album images.
 - `wedding/audio/ceremony.mp3` for background audio.
+- `wedding/hero/hero-mobile.jpg`, `wedding/hero/hero-tablet.jpg`, `wedding/hero/hero-desktop.jpg` for responsive hero images.
+- `wedding/story/story.jpg` (any image filename is accepted) for the story image.
 - `wedding/object/...` for future downloadable files that should not appear in the album.
 
-`BLOB_GALLERY_PREFIX` and `BLOB_AUDIO_PREFIX` can be changed per Vercel environment for testing another folder. The API lists all Blob pages, so adding or removing files updates the album without a frontend redeploy. The API response is intentionally `no-store` during testing so a refresh reads the current Blob contents.
+`BLOB_GALLERY_PREFIX`, `BLOB_AUDIO_PREFIX`, `BLOB_HERO_PREFIX`, and `BLOB_STORY_PREFIX` can be changed per Vercel environment for testing another folder. The API lists all Blob pages, so adding or removing files updates the album without a frontend redeploy. The API response is intentionally `no-store` during testing so a refresh reads the current Blob contents.
 
 Run `api/schema.sql` once against the Neon database before inserting dynamic wedding content.

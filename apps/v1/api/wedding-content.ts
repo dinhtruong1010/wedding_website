@@ -15,7 +15,12 @@ const sendJson = (res: VercelResponse, statusCode: number, body: unknown) => {
 
 const isImage = (pathname: string) => /\.(avif|gif|jpe?g|png|webp)$/i.test(pathname);
 const isAudio = (pathname: string) => /\.(mp3|m4a|wav|ogg)$/i.test(pathname);
-type WeddingMediaConfig = { galleryImages?: string[]; audioUrl?: string };
+type WeddingMediaConfig = {
+  galleryImages?: string[];
+  audioUrl?: string;
+  heroImages?: { mobile?: string; tablet?: string; desktop?: string };
+  storyImage?: string;
+};
 
 async function listAllBlobs() {
   const { list } = await import("@vercel/blob");
@@ -65,17 +70,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const blobs = await listAllBlobs();
         const galleryPrefix = process.env.BLOB_GALLERY_PREFIX ?? "wedding/gallery/";
         const audioPrefix = process.env.BLOB_AUDIO_PREFIX ?? "wedding/audio/";
+        const heroPrefix = process.env.BLOB_HERO_PREFIX ?? "wedding/hero/";
+        const storyPrefix = process.env.BLOB_STORY_PREFIX ?? "wedding/story/";
         const canonicalGallery = blobs.filter((blob) => isImage(blob.pathname) && blob.pathname.startsWith(galleryPrefix));
         const galleryImages = canonicalGallery.length > 0
           ? canonicalGallery
           : blobs.filter((blob) => isImage(blob.pathname) && !blob.pathname.includes("/audio/") && !blob.pathname.includes("/object/"));
-        const audio = blobs.find((blob) => isAudio(blob.pathname) && blob.pathname.startsWith(audioPrefix))
+        const audioFiles = blobs.filter((blob) => isAudio(blob.pathname) && blob.pathname.startsWith(audioPrefix));
+        const audio = audioFiles.find((blob) => /\/Audio\.mp3$/i.test(blob.pathname))
+          ?? audioFiles.find((blob) => /\.mp3$/i.test(blob.pathname))
+          ?? audioFiles[0]
           ?? blobs.find((blob) => isAudio(blob.pathname) && blob.pathname.includes("/audio/"));
+        const heroFiles = blobs.filter((blob) => isImage(blob.pathname) && blob.pathname.startsWith(heroPrefix));
+        const story = blobs.find((blob) => isImage(blob.pathname) && blob.pathname.startsWith(storyPrefix));
 
         if (galleryImages.length > 0) config.galleryImages = galleryImages.map((blob) => blob.url);
         if (audio) config.audioUrl = audio.url;
+        if (heroFiles.length > 0) {
+          const byName = (name: string) => heroFiles.find((blob) => blob.pathname.toLowerCase().endsWith(`/${name}`))?.url;
+          config.heroImages = {
+            mobile: byName("hero-mobile.jpg") ?? config.heroImages?.mobile,
+            tablet: byName("hero-tablet.jpg") ?? config.heroImages?.tablet,
+            desktop: byName("hero-desktop.jpg") ?? config.heroImages?.desktop,
+          };
+        }
+        if (story) config.storyImage = story.url;
         galleryCount = galleryImages.length;
-        blobLoaded = galleryImages.length > 0 || Boolean(audio);
+        blobLoaded = galleryImages.length > 0 || Boolean(audio) || heroFiles.length > 0 || Boolean(story);
       } catch {
         // Local config remains the deploy-safe fallback when Blob is not provisioned yet.
       }

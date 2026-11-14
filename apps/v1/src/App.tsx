@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, Heart, Calendar, Clock, MapPin, Quote, ChevronDown, Volume2, VolumeX } from 'lucide-react';
-import { weddingConfig } from './config';
+import { weddingConfig, type WeddingConfig } from './config';
 import { ResponsiveImage, ResponsivePicture, ResponsiveGalleryImage } from './components/ResponsiveImage';
 import { Language, languageLabels, localeByLanguage, translations } from './i18n';
 
@@ -147,16 +147,16 @@ const AudioToggle = ({ language, isMuted, onToggle }: AudioToggleProps) => (
   </button>
 );
 
-const Hero = ({ language, isMuted, onToggle }: LocalizedProps & Pick<AudioToggleProps, 'isMuted' | 'onToggle'>) => {
+const Hero = ({ language, isMuted, onToggle, heroImages }: LocalizedProps & Pick<AudioToggleProps, 'isMuted' | 'onToggle'> & { heroImages: WeddingConfig['heroImages'] }) => {
   const t = translations[language];
 
   return (
     <section className="hero-section relative w-full flex items-center justify-center text-center overflow-hidden">
       <div className="absolute inset-0 z-0 w-full h-full">
         <ResponsivePicture
-          mobileSrc={weddingConfig.heroImages.mobile}
-          tabletSrc={weddingConfig.heroImages.tablet}
-          desktopSrc={weddingConfig.heroImages.desktop}
+          mobileSrc={heroImages.mobile}
+          tabletSrc={heroImages.tablet}
+          desktopSrc={heroImages.desktop}
           alt={t.hero.alt}
           className="hero-image w-full h-full"
           objectFit="cover"
@@ -198,7 +198,7 @@ const Hero = ({ language, isMuted, onToggle }: LocalizedProps & Pick<AudioToggle
   );
 };
 
-const OurStory = ({ language }: LocalizedProps) => {
+const OurStory = ({ language, storyImage }: LocalizedProps & { storyImage: string }) => {
   const t = translations[language];
   const timeline = t.story.timeline;
 
@@ -214,7 +214,7 @@ const OurStory = ({ language }: LocalizedProps) => {
           >
             <div className="absolute -top-6 -left-6 w-full h-full border border-primary/20 rounded-xl"></div>
             <ResponsiveImage
-              src={weddingConfig.storyImage}
+              src={storyImage}
               alt={t.story.imageAlt}
               className="relative z-10 w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[700px] asymmetric-img shadow-2xl"
               objectFit="cover"
@@ -519,8 +519,8 @@ export default function App() {
     <div className="min-h-screen">
       <audio ref={audioRef} src={activeConfig.audioUrl} loop preload="metadata" />
       <Navbar language={language} onLanguageChange={setLanguage} />
-      <Hero language={language} isMuted={isMuted} onToggle={toggleAudio} />
-      <OurStory language={language} />
+      <Hero language={language} isMuted={isMuted} onToggle={toggleAudio} heroImages={activeConfig.heroImages} />
+      <OurStory language={language} storyImage={activeConfig.storyImage} />
       <WeddingDetails language={language} />
       <PhotoGallery language={language} images={activeConfig.galleryImages} />
       <Gifts language={language} />
