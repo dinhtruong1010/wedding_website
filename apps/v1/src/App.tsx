@@ -530,7 +530,7 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch('/api/wedding-content')
+    fetch('/api/wedding-content', { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : null))
       .then(async (payload) => {
         const nextConfig = payload?.config
