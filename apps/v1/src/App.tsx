@@ -487,7 +487,9 @@ const preloadImage = async (source: ResponsiveImageSource) => {
             resolve();
             return;
           }
-          image.decode().then(resolve).catch(reject);
+          // A loaded image is usable even when decode() is rejected by a browser.
+          // Keep the Blob source instead of falling back to the local config.
+          image.decode().then(resolve).catch(resolve);
         };
         image.onerror = () => reject(new Error(`Unable to load hero image: ${url}`));
         image.src = url;
@@ -534,9 +536,22 @@ export default function App() {
         const nextConfig = payload?.config
           ? { ...weddingConfig, ...payload.config }
           : weddingConfig;
-        await preloadImage(currentHeroSource(nextConfig));
+
+        // Apply the API config before preloading. The preloader only prevents a
+        // visual flash; it must never decide whether Blob or local media wins.
         if (!cancelled) {
           setActiveConfig(nextConfig);
+        }
+
+        try {
+          await preloadImage(currentHeroSource(nextConfig));
+        } catch {
+          // The <picture> element still owns the source fallback chain. Keep the
+          // resolved API config so a transient preload failure cannot switch the
+          // page back to local assets.
+        }
+
+        if (!cancelled) {
           setHeroReady(true);
         }
       })
