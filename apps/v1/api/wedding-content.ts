@@ -1,4 +1,4 @@
-import { weddingContent } from "../config/wedding-content";
+import { weddingContent } from "../src/wedding-content";
 
 type VercelRequest = { method?: string };
 type VercelResponse = {

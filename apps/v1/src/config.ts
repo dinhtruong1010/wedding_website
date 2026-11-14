@@ -1,4 +1,4 @@
-import { weddingContent, type WeddingContent } from "../config/wedding-content";
+import { weddingContent, type WeddingContent } from "./wedding-content";
 
 export type WeddingConfig = WeddingContent;
 
