@@ -156,10 +156,13 @@ const Hero = ({ language, isMuted, onToggle, heroImages }: LocalizedProps & Pick
         <ResponsivePicture
           mobileSrc={heroImages.mobile}
           tabletSrc={heroImages.tablet}
-          desktopSrc={heroImages.desktop}
+          // The current landscape source is already cropped at the waist. Keep it
+          // as the desktop backdrop, while showing the complete portrait source.
+          desktopSrc={heroImages.mobile}
+          backgroundSrc={heroImages.desktop}
           alt={t.hero.alt}
           className="hero-image w-full h-full"
-          objectFit="cover"
+          objectFit="contain"
           priority={true}
         />
         <div className="absolute inset-0 bg-black/30"></div>
