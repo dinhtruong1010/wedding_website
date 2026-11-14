@@ -62,15 +62,6 @@
   background: #8ca8bd;
 }
 
-.responsive-picture__backdrop {
-  position: absolute;
-  inset: -24px;
-  background-position: center;
-  background-size: cover;
-  filter: blur(18px) brightness(0.7);
-  transform: scale(1.06);
-}
-
 /* Mobile: Full viewport height with contained image */
 @media (max-width: 640px) {
   .hero-section {
@@ -114,19 +105,10 @@
   .hero-image {
     width: 100%;
     height: 100%;
-    object-fit: contain !important;
+    object-fit: cover !important;
     object-position: center;
   }
 
-  .hero-section .responsive-picture__backdrop {
-    display: block;
-  }
-}
-
-@media (max-width: 1024px) {
-  .hero-section .responsive-picture__backdrop {
-    display: none;
-  }
 }
 
 /* Responsive Image Styles */

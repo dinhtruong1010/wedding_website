@@ -51,7 +51,6 @@ interface ResponsivePictureProps {
   mobileSrc: string;
   tabletSrc: string;
   desktopSrc: string;
-  backgroundSrc?: string;
   alt: string;
   className?: string;
   objectFit?: 'cover' | 'contain' | 'fill' | 'scale-down';
@@ -70,7 +69,6 @@ export const ResponsivePicture: React.FC<ResponsivePictureProps> = ({
   mobileSrc,
   tabletSrc,
   desktopSrc,
-  backgroundSrc,
   alt,
   className = '',
   objectFit = 'cover',
@@ -79,13 +77,6 @@ export const ResponsivePicture: React.FC<ResponsivePictureProps> = ({
 }) => {
   return (
     <div className="responsive-picture">
-      {backgroundSrc && (
-        <div
-          aria-hidden="true"
-          className="responsive-picture__backdrop"
-          style={{ backgroundImage: `url("${backgroundSrc}")` }}
-        />
-      )}
       <picture className="relative z-10 block h-full w-full">
       {/* Mobile: 0px to 640px */}
       <source media="(max-width: 640px)" srcSet={mobileSrc} />
