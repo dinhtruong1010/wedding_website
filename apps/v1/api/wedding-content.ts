@@ -1,5 +1,3 @@
-import weddingContent from "./wedding-content-config.json";
-
 export const config = { runtime: "nodejs" };
 
 type VercelRequest = { method?: string };
@@ -17,6 +15,7 @@ const sendJson = (res: VercelResponse, statusCode: number, body: unknown) => {
 
 const isImage = (pathname: string) => /\.(avif|gif|jpe?g|png|webp)$/i.test(pathname);
 const isAudio = (pathname: string) => /\.(mp3|m4a|wav|ogg)$/i.test(pathname);
+type WeddingMediaConfig = { galleryImages?: string[]; audioUrl?: string };
 
 async function listAllBlobs() {
   const { list } = await import("@vercel/blob");
@@ -39,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    let config = { ...weddingContent };
+    let config: WeddingMediaConfig = {};
     let blobLoaded = false;
     let neonLoaded = false;
     let galleryCount = 0;
@@ -51,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { neon } = await import("@neondatabase/serverless");
         const sql = neon(process.env.DATABASE_URL);
         const rows = await sql`SELECT value FROM wedding_config WHERE version = 'v1' AND key = 'wedding' LIMIT 1`;
-        const stored = rows[0]?.value as Partial<typeof weddingContent> | undefined;
+        const stored = rows[0]?.value as WeddingMediaConfig | undefined;
         if (stored) {
           config = { ...config, ...stored };
           neonLoaded = true;

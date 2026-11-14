@@ -1,4 +1,4 @@
-import weddingContent from "../api/wedding-content-config.json";
+import weddingContent from "./wedding-content.json";
 
 export interface WeddingConfig {
   groomName: string;
