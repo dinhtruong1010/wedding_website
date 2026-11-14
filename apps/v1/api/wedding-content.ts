@@ -1,5 +1,7 @@
 import { weddingContent } from "../src/wedding-content";
 
+export const config = { runtime: "nodejs" };
+
 type VercelRequest = { method?: string };
 type VercelResponse = {
   statusCode: number;
