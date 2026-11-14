@@ -10,10 +10,20 @@ export interface WeddingConfig {
   googleMapsUrl: string;
   groomGiftQrCode: string;
   brideGiftQrCode: string;
-  heroImages: { mobile: string; tablet: string; desktop: string };
+  heroImages: {
+    mobile: ResponsiveImageSource;
+    tablet: ResponsiveImageSource;
+    desktop: ResponsiveImageSource;
+  };
   storyImage: string;
   galleryImages: string[];
   audioUrl: string;
+}
+
+export interface ResponsiveImageSource {
+  avif?: string;
+  webp?: string;
+  fallback: string;
 }
 
 const blobBaseUrl = (import.meta.env.VITE_BLOB_PUBLIC_BASE_URL ?? "").replace(/\/$/, "");

@@ -18,9 +18,14 @@ const isAudio = (pathname: string) => /\.(mp3|m4a|wav|ogg)$/i.test(pathname);
 type WeddingMediaConfig = {
   galleryImages?: string[];
   audioUrl?: string;
-  heroImages?: { mobile?: string; tablet?: string; desktop?: string };
+  heroImages?: {
+    mobile?: ResponsiveImageSource;
+    tablet?: ResponsiveImageSource;
+    desktop?: ResponsiveImageSource;
+  };
   storyImage?: string;
 };
+type ResponsiveImageSource = { avif?: string; webp?: string; fallback: string };
 
 async function listAllBlobs() {
   const { list } = await import("@vercel/blob");
@@ -87,11 +92,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (galleryImages.length > 0) config.galleryImages = galleryImages.map((blob) => blob.url);
         if (audio) config.audioUrl = audio.url;
         if (heroFiles.length > 0) {
-          const byName = (name: string) => heroFiles.find((blob) => blob.pathname.toLowerCase().endsWith(`/${name}`))?.url;
+          const byName = (name: string): ResponsiveImageSource | undefined => {
+            const stem = name.replace(/\.[^.]+$/, "");
+            const find = (extension: string) => heroFiles.find((blob) => blob.pathname.toLowerCase().endsWith(`/${stem}.${extension}`))?.url;
+            const avif = find("avif");
+            const webp = find("webp");
+            const fallback = find("png") ?? find("jpg") ?? find("jpeg");
+            return fallback ? { avif, webp, fallback } : undefined;
+          };
           config.heroImages = {
-            mobile: byName("hero-mobile.jpg") ?? config.heroImages?.mobile,
-            tablet: byName("hero-tablet.jpg") ?? config.heroImages?.tablet,
-            desktop: byName("hero-desktop.jpg") ?? config.heroImages?.desktop,
+            mobile: byName("hero-mobile") ?? config.heroImages?.mobile,
+            tablet: byName("hero-tablet") ?? config.heroImages?.tablet,
+            desktop: byName("hero-desktop") ?? config.heroImages?.desktop,
           };
         }
         if (story) config.storyImage = story.url;

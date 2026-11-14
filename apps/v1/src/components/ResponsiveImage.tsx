@@ -1,4 +1,5 @@
 import React from 'react';
+import type { ResponsiveImageSource } from '../config';
 
 interface ResponsiveImageProps {
   src: string;
@@ -48,9 +49,9 @@ export const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
 };
 
 interface ResponsivePictureProps {
-  mobileSrc: string;
-  tabletSrc: string;
-  desktopSrc: string;
+  mobileSrc: ResponsiveImageSource;
+  tabletSrc: ResponsiveImageSource;
+  desktopSrc: ResponsiveImageSource;
   alt: string;
   className?: string;
   objectFit?: 'cover' | 'contain' | 'fill' | 'scale-down';
@@ -78,15 +79,14 @@ export const ResponsivePicture: React.FC<ResponsivePictureProps> = ({
   return (
     <div className="responsive-picture">
       <picture className="relative z-10 block h-full w-full">
-      {/* Mobile: 0px to 640px */}
-      <source media="(max-width: 640px)" srcSet={mobileSrc} />
-      {/* Tablet: 641px to 1024px */}
-      <source media="(max-width: 1024px)" srcSet={tabletSrc} />
-      {/* Desktop: 1025px and above */}
-      <source media="(min-width: 1025px)" srcSet={desktopSrc} />
-      {/* Fallback */}
+      <source media="(max-width: 640px)" srcSet={mobileSrc.avif} type="image/avif" />
+      <source media="(max-width: 640px)" srcSet={mobileSrc.webp} type="image/webp" />
+      <source media="(max-width: 1024px)" srcSet={tabletSrc.avif} type="image/avif" />
+      <source media="(max-width: 1024px)" srcSet={tabletSrc.webp} type="image/webp" />
+      <source media="(min-width: 1025px)" srcSet={desktopSrc.avif} type="image/avif" />
+      <source media="(min-width: 1025px)" srcSet={desktopSrc.webp} type="image/webp" />
       <img
-        src={desktopSrc}
+        src={desktopSrc.fallback}
         alt={alt}
         className={`responsive-image ${className}`}
         style={{ objectFit }}
