@@ -1,4 +1,4 @@
-import { weddingContent } from "./wedding-content-config";
+import weddingContent from "./wedding-content-config.json";
 
 type VercelResponse = {
   statusCode: number;

@@ -1,6 +1,20 @@
-import { weddingContent, type WeddingContent } from "../api/wedding-content-config";
+import weddingContent from "../api/wedding-content-config.json";
 
-export type WeddingConfig = WeddingContent;
+export interface WeddingConfig {
+  groomName: string;
+  brideName: string;
+  weddingDate: string;
+  weddingTime: string;
+  locationName: string;
+  locationAddress: string;
+  googleMapsUrl: string;
+  groomGiftQrCode: string;
+  brideGiftQrCode: string;
+  heroImages: { mobile: string; tablet: string; desktop: string };
+  storyImage: string;
+  galleryImages: string[];
+  audioUrl: string;
+}
 
 const blobBaseUrl = (import.meta.env.VITE_BLOB_PUBLIC_BASE_URL ?? "").replace(/\/$/, "");
 
