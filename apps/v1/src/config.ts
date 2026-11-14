@@ -1,4 +1,4 @@
-import { weddingContent, type WeddingContent } from "./wedding-content";
+import { weddingContent, type WeddingContent } from "../api/wedding-content-config";
 
 export type WeddingConfig = WeddingContent;
 
