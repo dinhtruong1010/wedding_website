@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, Heart, Calendar, Clock, MapPin, Quote, ChevronDown, Volume2, VolumeX } from 'lucide-react';
-import { weddingConfig, type WeddingConfig } from './config';
+import { weddingConfig, type ResponsiveImageSource, type WeddingConfig } from './config';
 import { ResponsiveImage, ResponsivePicture, ResponsiveGalleryImage } from './components/ResponsiveImage';
 import { Language, languageLabels, localeByLanguage, translations } from './i18n';
 
@@ -475,9 +475,45 @@ const Footer = ({ language }: LocalizedProps) => {
   );
 };
 
+const preferredHeroSource = (source: ResponsiveImageSource) => [source.avif, source.webp, source.fallback].filter(Boolean) as string[];
+
+const preloadImage = async (source: ResponsiveImageSource) => {
+  for (const url of preferredHeroSource(source)) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          if (typeof image.decode !== 'function') {
+            resolve();
+            return;
+          }
+          image.decode().then(resolve).catch(reject);
+        };
+        image.onerror = () => reject(new Error(`Unable to load hero image: ${url}`));
+        image.src = url;
+      });
+      return;
+    } catch {
+      // Try the next format when this browser cannot decode the preferred source.
+    }
+  }
+  throw new Error('No usable hero image source');
+};
+
+const currentHeroSource = (heroImages: WeddingConfig['heroImages']) => {
+  if (window.matchMedia('(max-width: 640px)').matches) return heroImages.mobile;
+  if (window.matchMedia('(max-width: 1024px)').matches) return heroImages.tablet;
+  return heroImages.desktop;
+};
+
+const HeroPlaceholder = () => (
+  <section className="hero-section hero-placeholder" aria-hidden="true" />
+);
+
 export default function App() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [activeConfig, setActiveConfig] = useState(weddingConfig);
+  const [heroReady, setHeroReady] = useState(false);
   const [isMuted, setIsMuted] = useState(() => window.localStorage.getItem('wedding-audio-muted') === 'true');
   const [language, setLanguage] = useState<Language>(() => {
     const savedLanguage = window.localStorage.getItem('wedding-language');
@@ -490,10 +526,27 @@ export default function App() {
   }, [language]);
 
   useEffect(() => {
+    let cancelled = false;
+
     fetch('/api/wedding-content')
       .then((response) => (response.ok ? response.json() : null))
-      .then((payload) => payload?.config && setActiveConfig((current) => ({ ...current, ...payload.config })))
-      .catch(() => undefined);
+      .then(async (payload) => {
+        const nextConfig = payload?.config
+          ? { ...weddingConfig, ...payload.config }
+          : weddingConfig;
+        await preloadImage(currentHeroSource(nextConfig));
+        if (!cancelled) {
+          setActiveConfig(nextConfig);
+          setHeroReady(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setHeroReady(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -519,7 +572,11 @@ export default function App() {
     <div className="min-h-screen">
       <audio ref={audioRef} src={activeConfig.audioUrl} loop preload="metadata" />
       <Navbar language={language} onLanguageChange={setLanguage} />
-      <Hero language={language} isMuted={isMuted} onToggle={toggleAudio} heroImages={activeConfig.heroImages} />
+      {heroReady ? (
+        <Hero language={language} isMuted={isMuted} onToggle={toggleAudio} heroImages={activeConfig.heroImages} />
+      ) : (
+        <HeroPlaceholder />
+      )}
       <OurStory language={language} storyImage={activeConfig.storyImage} />
       <WeddingDetails language={language} />
       <PhotoGallery language={language} images={activeConfig.galleryImages} />

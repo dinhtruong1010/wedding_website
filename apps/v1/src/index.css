@@ -62,6 +62,10 @@
   background: #8ca8bd;
 }
 
+.hero-placeholder {
+  background: #8ca8bd;
+}
+
 /* Mobile: Full viewport height with contained image */
 @media (max-width: 640px) {
   .hero-section {
