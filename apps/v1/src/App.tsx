@@ -395,9 +395,55 @@ const Gifts = ({ language }: LocalizedProps) => {
   );
 };
 
-const Guestbook = ({ language }: LocalizedProps) => {
+interface Wish {
+  id?: string;
+  name: string;
+  message: string;
+  createdAt?: string;
+}
+
+interface GuestbookProps extends LocalizedProps {
+  wishes?: Wish[];
+  onWishSubmitted: (wish: Wish) => void;
+}
+
+const Guestbook = ({ language, wishes, onWishSubmitted }: GuestbookProps) => {
   const t = translations[language];
-  const wishes = t.guestbook.wishes;
+  const [name, setName] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const displayedWishes = wishes ?? t.guestbook.wishes;
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setStatus('idle');
+
+    try {
+      const response = await fetch('/api/wishes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, message }),
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok || !payload?.wish) {
+        throw new Error(payload?.error ?? 'Unable to send wish');
+      }
+
+      onWishSubmitted(payload.wish);
+      setName('');
+      setMessage('');
+      setStatus('success');
+    } catch {
+      setStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <section id="wishes" className="py-24 px-6 bg-surface">
@@ -410,11 +456,15 @@ const Guestbook = ({ language }: LocalizedProps) => {
               <p className="text-on-surface-variant italic">{t.guestbook.intro}</p>
             </div>
 
-            <form className="space-y-8 bg-surface-container-low p-10 rounded-xl soft-petal-shadow">
+            <form onSubmit={handleSubmit} className="space-y-8 bg-surface-container-low p-10 rounded-xl soft-petal-shadow">
               <div className="space-y-2">
                 <label className="block font-label text-xs uppercase tracking-widest text-primary font-bold">{t.guestbook.nameLabel}</label>
                 <input
                   type="text"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  maxLength={120}
+                  required
                   placeholder={t.guestbook.namePlaceholder}
                   className="w-full bg-transparent border-0 border-b border-outline-variant/30 focus:ring-0 focus:border-primary px-0 py-3 transition-all"
                 />
@@ -423,22 +473,31 @@ const Guestbook = ({ language }: LocalizedProps) => {
                 <label className="block font-label text-xs uppercase tracking-widest text-primary font-bold">{t.guestbook.messageLabel}</label>
                 <textarea
                   placeholder={t.guestbook.messagePlaceholder}
+                  value={message}
+                  onChange={(event) => setMessage(event.target.value)}
+                  maxLength={1000}
+                  required
                   rows={4}
                   className="w-full bg-transparent border-0 border-b border-outline-variant/30 focus:ring-0 focus:border-primary px-0 py-3 transition-all"
                 ></textarea>
               </div>
-              <button className="w-full gold-foil py-4 rounded-xl text-white font-label uppercase tracking-widest font-bold shadow-lg hover:scale-[1.02] transition-transform">
-                {t.guestbook.submit}
+              <button type="submit" disabled={isSubmitting} className="w-full gold-foil py-4 rounded-xl text-white font-label uppercase tracking-widest font-bold shadow-lg hover:scale-[1.02] transition-transform disabled:cursor-wait disabled:opacity-70">
+                {isSubmitting ? t.guestbook.sending : t.guestbook.submit}
               </button>
+              {status !== 'idle' && (
+                <p role="status" aria-live="polite" className={status === 'success' ? 'text-green-700' : 'text-red-700'}>
+                  {status === 'success' ? t.guestbook.success : t.guestbook.error}
+                </p>
+              )}
             </form>
           </div>
 
           <div className="space-y-8">
             <h3 className="font-headline text-2xl text-on-surface mb-8">{t.guestbook.recent}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {wishes.map((wish, index) => (
+              {displayedWishes.map((wish, index) => (
                 <motion.div
-                  key={index}
+                  key={wish.id ?? `${wish.name}-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -515,6 +574,7 @@ const HeroPlaceholder = () => (
 export default function App() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [activeConfig, setActiveConfig] = useState(weddingConfig);
+  const [wishes, setWishes] = useState<Wish[] | undefined>();
   const [heroReady, setHeroReady] = useState(false);
   const [isMuted, setIsMuted] = useState(() => window.localStorage.getItem('wedding-audio-muted') === 'true');
   const [language, setLanguage] = useState<Language>(() => {
@@ -565,6 +625,23 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
+    fetch('/api/wishes', { cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!cancelled && Array.isArray(payload?.wishes)) {
+          setWishes(payload.wishes);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     window.localStorage.setItem('wedding-audio-muted', String(isMuted));
     if (audioRef.current) audioRef.current.muted = isMuted;
   }, [isMuted]);
@@ -596,7 +673,11 @@ export default function App() {
       <WeddingDetails language={language} />
       <PhotoGallery language={language} images={activeConfig.galleryImages} />
       <Gifts language={language} />
-      <Guestbook language={language} />
+      <Guestbook
+        language={language}
+        wishes={wishes}
+        onWishSubmitted={(wish) => setWishes((current) => [wish, ...(current ?? [])])}
+      />
       <Footer language={language} />
     </div>
   );

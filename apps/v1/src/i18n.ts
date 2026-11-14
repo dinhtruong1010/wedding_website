@@ -83,6 +83,9 @@ export const translations = {
       messageLabel: 'Lời chúc',
       messagePlaceholder: 'Viết một lời chúc thật đẹp...',
       submit: 'Gửi lời chúc',
+      sending: 'Đang gửi...',
+      success: 'Lời chúc của bạn đã được gửi.',
+      error: 'Chưa thể gửi lời chúc. Vui lòng thử lại.',
       recent: 'Lời chúc gần đây',
       wishes: [
         { name: 'Gia đình và bạn bè', message: 'Chúc hai bạn trăm năm hạnh phúc, luôn yêu thương và đồng hành cùng nhau.' },
@@ -171,6 +174,9 @@ export const translations = {
       messageLabel: 'Your Message',
       messagePlaceholder: 'Write something beautiful...',
       submit: 'Send Wish',
+      sending: 'Sending...',
+      success: 'Your wish has been sent.',
+      error: 'We could not send your wish. Please try again.',
       recent: 'Recent Wishes',
       wishes: [
         { name: 'Family & Friends', message: 'Wishing you both a lifetime of happiness, love, and partnership.' },
