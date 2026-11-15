@@ -13,7 +13,8 @@
     "tablet": { "fallback": "/data/hero-tablet.jpg" },
     "desktop": { "fallback": "/data/hero-desktop.jpg" }
   },
-  "storyImage": "/data/1JDID6VFI_6FLIUL.JPG",
-  "galleryImages": ["/data/IMG_7737.JPG", "/data/IMG_7739.JPG", "/data/IMG_7740.JPG", "/data/IMG_9526.JPG", "/data/IMG_9527.JPG"],
+  "storyImage": "/data/story_images/story_1.jpg",
+  "storyImages": ["/data/story_images/story_1.jpg", "/data/story_images/story_2.jpg", "/data/story_images/story_3.jpg", "/data/story_images/story_4.jpg", "/data/story_images/story_4.jpg", "/data/story_images/story_6.jpg", "/data/story_images/story_6.jpg", "/data/story_images/story_8.jpg"],
+  "galleryImages": ["/data/IMG_7737.JPG", "/data/IMG_7739.JPG", "/data/IMG_7740.JPG", "/data/IMG_9526.JPG", "/data/IMG_9527.JPG", "/data/IMG_9528.JPG"],
   "audioUrl": "/audio/Audio.mp3"
 }

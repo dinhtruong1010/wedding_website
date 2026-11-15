@@ -24,6 +24,7 @@ type WeddingMediaConfig = {
     desktop?: ResponsiveImageSource;
   };
   storyImage?: string;
+  storyImages?: string[];
 };
 type ResponsiveImageSource = { avif?: string; webp?: string; fallback: string };
 
@@ -87,7 +88,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ?? audioFiles[0]
           ?? blobs.find((blob) => isAudio(blob.pathname) && blob.pathname.includes("/audio/"));
         const heroFiles = blobs.filter((blob) => isImage(blob.pathname) && blob.pathname.startsWith(heroPrefix));
-        const story = blobs.find((blob) => isImage(blob.pathname) && blob.pathname.startsWith(storyPrefix));
+        const storyFiles = blobs
+          .filter((blob) => isImage(blob.pathname) && blob.pathname.startsWith(storyPrefix))
+          .sort((left, right) => left.pathname.localeCompare(right.pathname));
+        const story = storyFiles[0];
 
         if (galleryImages.length > 0) config.galleryImages = galleryImages.map((blob) => blob.url);
         if (audio) config.audioUrl = audio.url;
@@ -107,6 +111,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           };
         }
         if (story) config.storyImage = story.url;
+        if (storyFiles.length > 0) {
+          const storyByNumber = new Map(
+            storyFiles
+              .map((file) => file.pathname.match(/story_(\d+)\.[^.]+$/i)?.[1] && [Number(file.pathname.match(/story_(\d+)\.[^.]+$/i)?.[1]), file.url])
+              .filter((entry): entry is [number, string] => Boolean(entry)),
+          );
+          const firstStory = storyFiles[0].url;
+          config.storyImages = Array.from({ length: 8 }, (_, index) => (
+            storyByNumber.get(index + 1) ?? storyByNumber.get(index) ?? storyByNumber.get(index + 2) ?? firstStory
+          ));
+        }
         galleryCount = galleryImages.length;
         blobLoaded = galleryImages.length > 0 || Boolean(audio) || heroFiles.length > 0 || Boolean(story);
       } catch {

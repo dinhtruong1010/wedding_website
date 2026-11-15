@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, Heart, Calendar, Clock, MapPin, Quote, ChevronDown, Volume2, VolumeX } from 'lucide-react';
+import { Menu, X, Heart, Calendar, Clock, MapPin, Quote, ChevronDown, ChevronLeft, ChevronRight, Volume2, VolumeX, Eye, EyeOff, Download } from 'lucide-react';
 import { weddingConfig, type ResponsiveImageSource, type WeddingConfig } from './config';
 import { ResponsiveImage, ResponsivePicture, ResponsiveGalleryImage } from './components/ResponsiveImage';
 import { Language, languageLabels, localeByLanguage, translations } from './i18n';
@@ -24,7 +24,7 @@ const LanguageSwitcher = ({ language, onLanguageChange }: NavbarProps) => {
   const t = translations[language];
 
   return (
-    <div className="flex items-center gap-1 rounded-full bg-white/15 p-1 backdrop-blur-sm" aria-label={t.language.label}>
+    <div className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-white/15 p-1 backdrop-blur-sm" aria-label={t.language.label}>
       {(['vi', 'en'] as Language[]).map((item) => {
         const isActive = item === language;
 
@@ -33,7 +33,7 @@ const LanguageSwitcher = ({ language, onLanguageChange }: NavbarProps) => {
             key={item}
             type="button"
             onClick={() => onLanguageChange(item)}
-            className={`h-8 min-w-10 rounded-full px-3 font-label text-xs font-bold transition-all ${
+            className={`h-8 min-w-10 whitespace-nowrap rounded-full px-3 font-label text-xs font-bold transition-all ${
               isActive ? 'bg-white text-primary shadow-sm' : 'text-current hover:bg-white/15'
             }`}
             aria-pressed={isActive}
@@ -61,6 +61,7 @@ const Navbar = ({ language, onLanguageChange }: NavbarProps) => {
     { name: t.nav.story, href: '#story' },
     { name: t.nav.details, href: '#details' },
     { name: t.nav.gallery, href: '#gallery' },
+    { name: t.nav.rsvp, href: '#rsvp', action: true },
     { name: t.nav.gifts, href: '#gifts' },
     { name: t.nav.wishes, href: '#wishes' },
   ];
@@ -73,22 +74,30 @@ const Navbar = ({ language, onLanguageChange }: NavbarProps) => {
         </div>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a
-              key={link.name}
-              href={link.href}
-              className={`font-label text-sm uppercase tracking-widest transition-colors hover:text-primary ${isScrolled ? 'text-on-surface' : 'text-white'}`}
-            >
-              {link.name}
-            </a>
-          ))}
-          <div className={isScrolled ? 'text-on-surface' : 'text-white'}>
+        <div className="hidden md:flex min-w-0 items-center gap-5">
+          <div className="flex min-w-0 flex-nowrap items-center gap-5">
+            {navLinks.map((link) => link.action ? (
+              <button
+                key={link.name}
+                type="button"
+                onClick={() => document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' })}
+                className={`shrink-0 whitespace-nowrap bg-transparent p-0 font-label text-sm uppercase tracking-widest transition-colors hover:text-primary ${isScrolled ? 'text-on-surface' : 'text-white'}`}
+              >
+                {link.name}
+              </button>
+            ) : (
+              <a
+                key={link.name}
+                href={link.href}
+                className={`shrink-0 whitespace-nowrap font-label text-sm uppercase tracking-widest transition-colors hover:text-primary ${isScrolled ? 'text-on-surface' : 'text-white'}`}
+              >
+                {link.name}
+              </a>
+            ))}
+          </div>
+          <div className={`shrink-0 ${isScrolled ? 'text-on-surface' : 'text-white'}`}>
             <LanguageSwitcher language={language} onLanguageChange={onLanguageChange} />
           </div>
-          <button className="gold-foil px-8 py-2 rounded-xl text-white font-headline italic hover:scale-105 transition-transform shadow-md">
-            {t.nav.rsvp}
-          </button>
         </div>
 
         {/* Mobile Toggle */}
@@ -106,12 +115,24 @@ const Navbar = ({ language, onLanguageChange }: NavbarProps) => {
             exit={{ opacity: 0, y: -20 }}
             className="absolute top-full left-0 w-full bg-white shadow-xl py-8 flex flex-col items-center gap-6 md:hidden"
           >
-            {navLinks.map((link) => (
+            {navLinks.map((link) => link.action ? (
+              <button
+                key={link.name}
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="shrink-0 whitespace-nowrap bg-transparent p-0 font-label text-sm uppercase tracking-widest text-on-surface transition-colors hover:text-primary"
+              >
+                {link.name}
+              </button>
+            ) : (
               <a
                 key={link.name}
                 href={link.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="font-label text-sm uppercase tracking-widest text-on-surface hover:text-primary"
+                className="shrink-0 whitespace-nowrap font-label text-sm uppercase tracking-widest text-on-surface hover:text-primary"
               >
                 {link.name}
               </a>
@@ -119,9 +140,6 @@ const Navbar = ({ language, onLanguageChange }: NavbarProps) => {
             <div className="text-on-surface">
               <LanguageSwitcher language={language} onLanguageChange={onLanguageChange} />
             </div>
-            <button className="gold-foil px-10 py-3 rounded-xl text-white font-headline italic">
-              {t.nav.rsvp}
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -171,9 +189,6 @@ const Hero = ({ language, isMuted, onToggle, heroImages }: LocalizedProps & Pick
         transition={{ duration: 1 }}
         className="relative z-10 px-6 max-w-4xl"
       >
-        <h1 className="font-display text-7xl md:text-9xl text-white mb-6 drop-shadow-2xl">
-          {weddingConfig.groomName} & {weddingConfig.brideName}
-        </h1>
         <p className="font-label uppercase tracking-[0.3em] text-white/90 text-sm md:text-lg mb-8">
           {formatWeddingDate(language, { month: 'long', day: 'numeric', year: 'numeric' })} • {weddingConfig.locationName}
         </p>
@@ -198,56 +213,48 @@ const Hero = ({ language, isMuted, onToggle, heroImages }: LocalizedProps & Pick
   );
 };
 
-const OurStory = ({ language, storyImage }: LocalizedProps & { storyImage: string }) => {
+const OurStory = ({ language, storyImages }: LocalizedProps & { storyImages: string[] }) => {
   const t = translations[language];
   const timeline = t.story.timeline;
+  const imagePool = storyImages.length > 0 ? storyImages : [weddingConfig.storyImage];
+  const resolvedStoryImages = timeline.map((_, index) => imagePool[index % imagePool.length]);
 
   return (
-    <section id="story" className="py-24 md:py-32 px-6 bg-surface">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="relative"
-          >
-            <div className="absolute -top-6 -left-6 w-full h-full border border-primary/20 rounded-xl"></div>
-            <ResponsiveImage
-              src={storyImage}
-              alt={t.story.imageAlt}
-              className="relative z-10 w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[700px] asymmetric-img shadow-2xl"
-              objectFit="cover"
-            />
-          </motion.div>
+    <section id="story" className="story-section px-6 py-24 md:py-32">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-20 text-center">
+          <span className="font-label text-sm font-semibold uppercase tracking-[0.2em] text-primary">{t.story.eyebrow}</span>
+          <h2 className="mt-4 font-headline text-4xl text-on-surface md:text-6xl">{t.story.title}</h2>
+        </div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="space-y-12"
-          >
-            <div className="space-y-4">
-              <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">{t.story.eyebrow}</span>
-              <h2 className="font-headline text-4xl md:text-6xl text-on-surface">{t.story.title}</h2>
-            </div>
-            <p className="font-body text-lg text-on-surface-variant leading-relaxed italic">
-              {t.story.body}
-            </p>
-
-            <div className="space-y-10 relative before:absolute before:left-[11px] before:top-4 before:bottom-4 before:w-[1px] before:bg-outline-variant/30">
-              {timeline.map((item, index) => (
-                <div key={index} className="relative pl-10">
-                  <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-primary-container flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-primary"></div>
-                  </div>
-                  <h4 className="font-headline text-xl text-on-surface">{item.title}</h4>
-                  <p className="font-label text-xs text-primary mb-2 tracking-widest">{item.date}</p>
-                  <p className="text-on-surface-variant leading-relaxed">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
+        <div className="story-timeline">
+          {timeline.map((item, index) => (
+            <motion.article
+              key={`${item.title}-${index}`}
+              initial={{ opacity: 0, x: index % 2 === 0 ? -36 : 36 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.18 }}
+              transition={{ duration: 0.65, ease: 'easeOut' }}
+              className={`story-step ${index % 2 === 1 ? 'story-step-reverse' : ''}`}
+            >
+              <div className="story-step-marker" aria-hidden="true">
+                <span>{String(index + 1).padStart(2, '0')}</span>
+              </div>
+              <div className="story-step-media">
+                <ResponsiveImage
+                  src={resolvedStoryImages[index]}
+                  alt={`${t.story.imageAlt} - ${item.title}`}
+                  className="story-step-image"
+                  objectFit="cover"
+                />
+              </div>
+              <div className="story-step-copy">
+                <p className="font-label text-xs font-bold uppercase tracking-[0.18em] text-primary">{item.date}</p>
+                <h3 className="mt-3 font-headline text-2xl text-on-surface md:text-3xl">{item.title}</h3>
+                <p className="mt-4 leading-relaxed text-on-surface-variant">{item.description}</p>
+              </div>
+            </motion.article>
+          ))}
         </div>
       </div>
     </section>
@@ -317,44 +324,335 @@ const WeddingDetails = ({ language }: LocalizedProps) => {
   );
 };
 
-const PhotoGallery = ({ language, images }: LocalizedProps & { images: string[] }) => {
-  const t = translations[language];
+const RSVP_SUBMISSION_ID_KEY = 'wedding-rsvp-submission-id';
+
+const getRsvpSubmissionId = () => {
+  const existing = window.localStorage.getItem(RSVP_SUBMISSION_ID_KEY);
+  if (existing) return existing;
+
+  const submissionId = window.crypto.randomUUID();
+  window.localStorage.setItem(RSVP_SUBMISSION_ID_KEY, submissionId);
+  return submissionId;
+};
+
+const Rsvp = ({ language }: LocalizedProps) => {
+  const t = translations[language].rsvp;
+  const [name, setName] = useState('');
+  const [attending, setAttending] = useState<boolean | null>(null);
+  const [partySize, setPartySize] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting || attending === null) return;
+
+    setIsSubmitting(true);
+    setStatus('idle');
+
+    try {
+      const response = await fetch('/api/rsvps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guestName: name,
+          attending,
+          partySize,
+          submissionId: getRsvpSubmissionId(),
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok || !payload?.rsvp) {
+        throw new Error(payload?.error ?? 'Unable to save RSVP');
+      }
+
+      setStatus('success');
+    } catch {
+      setStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <section id="gallery" className="py-24 px-6 bg-surface">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16 space-y-4">
-          <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">{t.gallery.eyebrow}</span>
-          <h2 className="font-headline text-4xl md:text-5xl text-on-surface">{t.gallery.title}</h2>
-        </div>
+    <section id="rsvp" className="bg-surface-container-low px-6 py-24">
+      <div className="mx-auto max-w-2xl text-center">
+        <span className="font-label text-sm font-semibold uppercase tracking-[0.2em] text-primary">{t.eyebrow}</span>
+        <h2 className="mt-4 font-headline text-4xl text-on-surface md:text-5xl">{t.title}</h2>
 
-        <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-          {images.map((src, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className={`relative group overflow-hidden ${index % 2 === 0 ? 'rounded-xl' : 'asymmetric-img'}`}
-            >
-              <ResponsiveGalleryImage
-                src={src}
-                alt={`${t.gallery.altPrefix} ${index + 1}`}
-                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Heart className="text-white" size={32} />
+        <form onSubmit={handleSubmit} className="mt-12 space-y-8 bg-white p-8 text-left shadow-xl sm:p-10">
+          <div className="space-y-2">
+            <label htmlFor="rsvp-name" className="block font-label text-xs font-bold uppercase tracking-widest text-primary">
+              {t.nameLabel}
+            </label>
+            <input
+              id="rsvp-name"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              maxLength={120}
+              required
+              placeholder={t.namePlaceholder}
+              className="w-full border-0 border-b border-outline-variant/30 bg-transparent px-0 py-3 focus:border-primary focus:ring-0"
+            />
+          </div>
+
+          <fieldset>
+            <legend className="font-label text-xs font-bold uppercase tracking-widest text-primary">{t.attendanceLabel}</legend>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {[
+                { value: true, label: t.attending },
+                { value: false, label: t.notAttending },
+              ].map((option) => {
+                const isSelected = attending === option.value;
+                return (
+                  <label
+                    key={String(option.value)}
+                    className={`flex min-h-12 cursor-pointer items-center justify-center border px-4 py-3 text-center font-label text-sm font-bold transition-colors ${
+                      isSelected
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-primary/25 text-on-surface hover:border-primary hover:text-primary'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="attendance"
+                      value={String(option.value)}
+                      checked={isSelected}
+                      onChange={() => setAttending(option.value)}
+                      className="sr-only"
+                      required={attending === null}
+                    />
+                    {option.label}
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {attending ? (
+            <fieldset>
+              <legend className="font-label text-xs font-bold uppercase tracking-widest text-primary">{t.partySizeLabel}</legend>
+              <div className="mt-3 grid grid-cols-4 gap-3">
+                {[1, 2, 3, 4].map((size) => {
+                  const isSelected = partySize === size;
+                  return (
+                    <label
+                      key={size}
+                      className={`flex min-h-12 cursor-pointer items-center justify-center border font-label text-sm font-bold transition-colors ${
+                        isSelected
+                          ? 'border-primary bg-primary text-white'
+                          : 'border-primary/25 text-on-surface hover:border-primary hover:text-primary'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="party-size"
+                        value={size}
+                        checked={isSelected}
+                        onChange={() => setPartySize(size)}
+                        className="sr-only"
+                      />
+                      {size}
+                    </label>
+                  );
+                })}
               </div>
-            </motion.div>
-          ))}
-        </div>
+            </fieldset>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={isSubmitting || attending === null}
+            className="w-full bg-primary py-4 font-label text-sm font-bold uppercase tracking-widest text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSubmitting ? t.submitting : t.submit}
+          </button>
+          {status !== 'idle' ? (
+            <p role="status" aria-live="polite" className={status === 'success' ? 'text-green-700' : 'text-red-700'}>
+              {status === 'success' ? t.success : t.error}
+            </p>
+          ) : null}
+        </form>
       </div>
     </section>
   );
 };
 
+const PhotoGallery = ({ language, images }: LocalizedProps & { images: string[] }) => {
+  const t = translations[language];
+  const galleryImages = images.slice(0, 6);
+  const [selectedImage, setSelectedImage] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (selectedImage === null) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedImage(null);
+      if (event.key === 'ArrowLeft') setSelectedImage((index) => index === null ? null : (index - 1 + galleryImages.length) % galleryImages.length);
+      if (event.key === 'ArrowRight') setSelectedImage((index) => index === null ? null : (index + 1) % galleryImages.length);
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [galleryImages.length, selectedImage]);
+
+  if (galleryImages.length === 0) return null;
+
+  const selectPreviousImage = () => setSelectedImage((index) => index === null ? null : (index - 1 + galleryImages.length) % galleryImages.length);
+  const selectNextImage = () => setSelectedImage((index) => index === null ? null : (index + 1) % galleryImages.length);
+
+  return (
+    <section id="gallery" className="gallery-section px-6 py-24">
+      <div className="mx-auto max-w-7xl">
+        <div className="text-center mb-16 space-y-4">
+          <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">{t.gallery.eyebrow}</span>
+          <h2 className="font-headline text-4xl md:text-5xl text-on-surface">{t.gallery.title}</h2>
+        </div>
+
+        <div className="gallery-featured-grid mx-auto max-w-3xl">
+          {galleryImages.slice(0, 2).map((src, index) => (
+            <GalleryPhoto
+              key={src}
+              src={src}
+              index={index}
+              alt={`${t.gallery.altPrefix} ${index + 1}`}
+              onSelect={() => setSelectedImage(index)}
+              featured
+              openLabel={t.gallery.open}
+            />
+          ))}
+        </div>
+
+        {galleryImages.length > 2 ? (
+          <div className="gallery-clothesline mt-14 pt-12">
+            <div className="gallery-hanging-grid">
+              {galleryImages.slice(2).map((src, index) => (
+                <GalleryPhoto
+                  key={src}
+                  src={src}
+                  index={index + 2}
+                  alt={`${t.gallery.altPrefix} ${index + 3}`}
+                  onSelect={() => setSelectedImage(index + 2)}
+                  openLabel={t.gallery.open}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <AnimatePresence>
+        {selectedImage !== null ? (
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${t.gallery.altPrefix} ${selectedImage + 1}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedImage(null)}
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.2 }}
+              onClick={(event) => event.stopPropagation()}
+              className="relative flex h-full w-full max-w-6xl items-center justify-center"
+            >
+              <ResponsiveGalleryImage
+                src={galleryImages[selectedImage]}
+                alt={`${t.gallery.altPrefix} ${selectedImage + 1}`}
+                containerClassName="gallery-lightbox-image"
+                className="max-h-[82svh] w-auto max-w-full object-contain shadow-2xl"
+              />
+              <button type="button" onClick={() => setSelectedImage(null)} aria-label={t.gallery.close} className="gallery-lightbox-close">
+                <X aria-hidden="true" size={24} />
+              </button>
+              <button type="button" onClick={selectPreviousImage} aria-label={t.gallery.previous} className="gallery-lightbox-arrow gallery-lightbox-previous">
+                <ChevronLeft aria-hidden="true" size={30} />
+              </button>
+              <button type="button" onClick={selectNextImage} aria-label={t.gallery.next} className="gallery-lightbox-arrow gallery-lightbox-next">
+                <ChevronRight aria-hidden="true" size={30} />
+              </button>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </section>
+  );
+};
+
+interface GalleryPhotoProps {
+  src: string;
+  index: number;
+  alt: string;
+  onSelect: () => void;
+  featured?: boolean;
+  openLabel: string;
+}
+
+const GalleryPhoto = ({ src, index, alt, onSelect, featured = false, openLabel }: GalleryPhotoProps) => {
+  const rotations = [-2.2, 1.8, -1.5, 2.4, -2.6, 1.4];
+  const rotation = rotations[index % rotations.length];
+
+  return (
+    <motion.button
+      type="button"
+      initial={{ opacity: 0, y: 28, rotate: rotation }}
+      whileInView={{ opacity: 1, y: 0, rotate: rotation }}
+      whileHover={{ scale: 1.035, rotate: rotation / 2 }}
+      animate={{ y: [0, -8, 0], rotate: [rotation, rotation + 1, rotation] }}
+      transition={{
+        opacity: { duration: 0.45, delay: index * 0.08 },
+        y: { duration: 3.2 + index * 0.14, repeat: Infinity, ease: 'easeInOut', delay: index * 0.25 },
+        rotate: { duration: 3.2 + index * 0.14, repeat: Infinity, ease: 'easeInOut', delay: index * 0.25 },
+      }}
+      viewport={{ once: true, amount: 0.2 }}
+      onClick={onSelect}
+      aria-label={`${openLabel} ${alt}`}
+      className={`gallery-polaroid group relative block w-full cursor-zoom-in bg-white p-2 pb-10 text-left shadow-lg transition-shadow hover:shadow-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary ${featured ? 'gallery-polaroid-featured' : 'gallery-polaroid-hanging'}`}
+    >
+      {!featured ? <span aria-hidden="true" className="gallery-photo-pin" /> : null}
+      <ResponsiveGalleryImage
+        src={src}
+        alt={alt}
+        containerClassName="gallery-photo"
+        className="aspect-[3/4] w-full object-cover transition-transform duration-500 group-hover:scale-[1.025]"
+      />
+      <span aria-hidden="true" className="absolute bottom-2 right-3 font-label text-sm font-semibold text-primary/80">{String(index + 1).padStart(2, '0')}</span>
+    </motion.button>
+  );
+};
+
 const Gifts = ({ language }: LocalizedProps) => {
   const t = translations[language];
+  const [isQrVisible, setIsQrVisible] = useState(false);
+
+  const downloadQr = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Unable to download QR code');
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = filename;
+      anchor.click();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   return (
     <section id="gifts" className="py-24 bg-[#f7ece1] px-6">
@@ -367,29 +665,59 @@ const Gifts = ({ language }: LocalizedProps) => {
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-8">
-          <div className="bg-white p-8 rounded-2xl shadow-xl border border-primary/10">
-            <h3 className="font-headline text-2xl text-secondary mb-4">{t.gifts.groomTitle}</h3>
-            <ResponsiveImage
-              src={weddingConfig.groomGiftQrCode}
-              alt={t.gifts.groomAlt}
-              className="mx-auto w-48 sm:w-56 md:w-64 h-48 sm:h-56 md:h-64 object-contain rounded-lg border border-primary/20"
-              objectFit="contain"
-            />
-            <p className="mt-4 text-sm text-on-surface-variant">{t.gifts.groomNote} {weddingConfig.groomName}.</p>
-          </div>
+        <button
+          type="button"
+          onClick={() => setIsQrVisible((visible) => !visible)}
+          aria-controls="gift-qr-region"
+          aria-expanded={isQrVisible}
+          title={isQrVisible ? t.gifts.hideQr : t.gifts.showQr}
+          className="mx-auto inline-flex items-center gap-2 rounded-full border border-primary/30 px-5 py-2 font-label text-xs font-bold uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white"
+        >
+          {isQrVisible ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+          {isQrVisible ? t.gifts.hideQr : t.gifts.showQr}
+        </button>
 
-          <div className="bg-white p-8 rounded-2xl shadow-xl border border-primary/10">
-            <h3 className="font-headline text-2xl text-secondary mb-4">{t.gifts.brideTitle}</h3>
-            <ResponsiveImage
-              src={weddingConfig.brideGiftQrCode}
-              alt={t.gifts.brideAlt}
-              className="mx-auto w-48 sm:w-56 md:w-64 h-48 sm:h-56 md:h-64 object-contain rounded-lg border border-primary/20"
-              objectFit="contain"
-            />
-            <p className="mt-4 text-sm text-on-surface-variant">{t.gifts.brideNote} {weddingConfig.brideName}.</p>
+        {isQrVisible ? (
+          <div id="gift-qr-region" className="grid sm:grid-cols-2 gap-8">
+            <div className="bg-white p-8 rounded-2xl shadow-xl border border-primary/10">
+              <h3 className="font-headline text-2xl text-secondary mb-4">{t.gifts.groomTitle}</h3>
+              <ResponsiveImage
+                src={weddingConfig.groomGiftQrCode}
+                alt={t.gifts.groomAlt}
+                className="mx-auto h-36 w-36 rounded-lg border border-primary/20 object-contain sm:h-40 sm:w-40 md:h-44 md:w-44"
+                objectFit="contain"
+              />
+              <p className="mt-4 text-sm text-on-surface-variant">{t.gifts.groomNote} {weddingConfig.groomName}.</p>
+              <button
+                type="button"
+                onClick={() => downloadQr(weddingConfig.groomGiftQrCode, 'qr-chu-re.jpg')}
+                className="mx-auto mt-5 inline-flex items-center gap-2 border border-primary/30 px-4 py-2 font-label text-xs font-bold uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white"
+              >
+                <Download size={14} aria-hidden="true" />
+                {t.gifts.downloadQr}
+              </button>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl shadow-xl border border-primary/10">
+              <h3 className="font-headline text-2xl text-secondary mb-4">{t.gifts.brideTitle}</h3>
+              <ResponsiveImage
+                src={weddingConfig.brideGiftQrCode}
+                alt={t.gifts.brideAlt}
+                className="mx-auto h-36 w-36 rounded-lg border border-primary/20 object-contain sm:h-40 sm:w-40 md:h-44 md:w-44"
+                objectFit="contain"
+              />
+              <p className="mt-4 text-sm text-on-surface-variant">{t.gifts.brideNote} {weddingConfig.brideName}.</p>
+              <button
+                type="button"
+                onClick={() => downloadQr(weddingConfig.brideGiftQrCode, 'qr-co-dau.jpg')}
+                className="mx-auto mt-5 inline-flex items-center gap-2 border border-primary/30 px-4 py-2 font-label text-xs font-bold uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white"
+              >
+                <Download size={14} aria-hidden="true" />
+                {t.gifts.downloadQr}
+              </button>
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </section>
   );
@@ -452,7 +780,6 @@ const Guestbook = ({ language, wishes, onWishSubmitted }: GuestbookProps) => {
           <div className="space-y-10">
             <div className="space-y-4">
               <span className="font-label uppercase tracking-[0.2em] text-primary text-sm font-semibold">{t.guestbook.eyebrow}</span>
-              <h2 className="font-headline text-4xl text-on-surface">{t.guestbook.title}</h2>
               <p className="text-on-surface-variant italic">{t.guestbook.intro}</p>
             </div>
 
@@ -669,8 +996,9 @@ export default function App() {
       ) : (
         <HeroPlaceholder />
       )}
-      <OurStory language={language} storyImage={activeConfig.storyImage} />
+      <OurStory language={language} storyImages={activeConfig.storyImages} />
       <WeddingDetails language={language} />
+      <Rsvp language={language} />
       <PhotoGallery language={language} images={activeConfig.galleryImages} />
       <Gifts language={language} />
       <Guestbook
