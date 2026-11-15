@@ -51,6 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const guestName = typeof body.guestName === "string" ? body.guestName.trim() : "";
   const attending = body.attending;
   const requestedPartySize = body.partySize;
+  const partySizeValue = typeof requestedPartySize === "number" ? requestedPartySize : NaN;
   const submissionId = typeof body.submissionId === "string" ? body.submissionId : "";
 
   if (!guestName || typeof attending !== "boolean" || !UUID_PATTERN.test(submissionId)) {
@@ -59,11 +60,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (guestName.length > 120) {
     return sendJson(res, 400, { error: "Guest name is too long" });
   }
-  if (attending && (!Number.isInteger(requestedPartySize) || requestedPartySize < 1 || requestedPartySize > 4)) {
+  if (attending && (!Number.isInteger(partySizeValue) || partySizeValue < 1 || partySizeValue > 4)) {
     return sendJson(res, 400, { error: "Party size must be between 1 and 4" });
   }
 
-  const partySize = attending ? requestedPartySize as number : 0;
+  const partySize = attending ? partySizeValue : 0;
 
   try {
     const { neon } = await import("@neondatabase/serverless");

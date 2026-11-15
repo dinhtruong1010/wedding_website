@@ -593,6 +593,7 @@ const PhotoGallery = ({ language, images }: LocalizedProps & { images: string[] 
 };
 
 interface GalleryPhotoProps {
+  key?: React.Key;
   src: string;
   index: number;
   alt: string;
