@@ -83,8 +83,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ? canonicalGallery
           : blobs.filter((blob) => isImage(blob.pathname) && !blob.pathname.includes("/audio/") && !blob.pathname.includes("/object/"));
         const audioFiles = blobs.filter((blob) => isAudio(blob.pathname) && blob.pathname.startsWith(audioPrefix));
-        const audio = audioFiles.find((blob) => /\/Audio\.mp3$/i.test(blob.pathname))
-          ?? audioFiles.find((blob) => /\.mp3$/i.test(blob.pathname))
+        const audio = audioFiles.find((blob) => /\/Audio\.m4a$/i.test(blob.pathname))
+          ?? audioFiles.find((blob) => /\/Audio\.mp3$/i.test(blob.pathname))
+          ?? audioFiles.find((blob) => /\.(m4a|mp3)$/i.test(blob.pathname))
           ?? audioFiles[0]
           ?? blobs.find((blob) => isAudio(blob.pathname) && blob.pathname.includes("/audio/"));
         const heroFiles = blobs.filter((blob) => isImage(blob.pathname) && blob.pathname.startsWith(heroPrefix));
