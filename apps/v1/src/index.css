@@ -800,6 +800,53 @@
   }
 }
 
+/* ---------- Cursor effects (trail + click burst) ---------- */
+
+.cursor-layer {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+}
+.cursor-trail,
+.cursor-burst {
+  position: absolute;
+  color: var(--c);
+  font-size: var(--s);
+  line-height: 1;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  will-change: transform, opacity;
+}
+.cursor-trail {
+  animation: cursor-trail 900ms ease-out forwards;
+}
+.cursor-burst {
+  animation: cursor-burst 750ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.cursor-ripple {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(232, 138, 165, 0.8);
+  border-radius: 9999px;
+  animation: cursor-ripple 550ms ease-out forwards;
+}
+@keyframes cursor-trail {
+  0% { transform: translate(-50%, -50%) scale(0.4) rotate(0deg); opacity: 0.95; }
+  25% { transform: translate(-50%, -50%) scale(1.1) rotate(calc(var(--rot) / 2)); opacity: 0.9; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + 26px)) scale(0.3) rotate(var(--rot)); opacity: 0; }
+}
+@keyframes cursor-burst {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1) rotate(var(--rot)); opacity: 0; }
+}
+@keyframes cursor-ripple {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(4.5); opacity: 0; }
+}
+
 /* ---------- Reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {

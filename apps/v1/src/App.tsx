@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { weddingConfig, type ResponsiveImageSource, type WeddingConfig } from './config';
 import { ResponsiveImage, ResponsivePicture, ResponsiveGalleryImage } from './components/ResponsiveImage';
+import { CursorEffects } from './components/CursorEffects';
 import { Language, languageLabels, localeByLanguage, translations } from './i18n';
 
 // --- Shared helpers ---
@@ -1750,6 +1751,7 @@ export default function App() {
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen">
         <audio ref={audioRef} src={activeConfig.audioUrl} loop preload="none" />
+        <CursorEffects />
         <ScrollProgress />
         <Navbar language={language} onLanguageChange={setLanguage} />
         <main>
