@@ -1,24 +1,35 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import type { ResponsiveImageSource } from '../config';
+
+type ObjectFit = 'cover' | 'contain' | 'fill' | 'scale-down';
+
+/**
+ * Tracks whether an <img> has finished loading so we can show a soft shimmer
+ * skeleton until then. Also handles images that were already cached before
+ * React attached its listeners.
+ */
+const useImageLoaded = () => {
+  const [loaded, setLoaded] = useState(false);
+  const ref = useCallback((image: HTMLImageElement | null) => {
+    if (image?.complete && image.naturalWidth > 0) setLoaded(true);
+  }, []);
+  const markLoaded = useCallback(() => setLoaded(true), []);
+  return { ref, loaded, markLoaded };
+};
+
+const skeletonClass = (loaded: boolean) => `img-skeleton${loaded ? ' is-loaded' : ''}`;
 
 interface ResponsiveImageProps {
   src: string;
   alt: string;
   className?: string;
   priority?: boolean;
-  objectFit?: 'cover' | 'contain' | 'fill' | 'scale-down';
+  objectFit?: ObjectFit;
   sizes?: string;
   aspectRatio?: string; // e.g., '16/9', '4/3', '3/4'
   referrerPolicy?: React.ImgHTMLAttributes<HTMLImageElement>['referrerPolicy'];
 }
 
-/**
- * ResponsiveImage Component
- * Handles responsive image display for multi-device compatibility
- * - Automatically optimizes images for different screen sizes
- * - Uses CSS-based size optimization with media queries
- * - Provides fallback for older browsers
- */
 export const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
   src,
   alt,
@@ -29,21 +40,23 @@ export const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
   aspectRatio,
   referrerPolicy = 'no-referrer',
 }) => {
+  const { ref, loaded, markLoaded } = useImageLoaded();
   const style: React.CSSProperties = { objectFit };
-  if (aspectRatio) {
-    style.aspectRatio = aspectRatio;
-  }
-  
+  if (aspectRatio) style.aspectRatio = aspectRatio;
+
   return (
     <img
+      ref={ref}
       src={src}
       alt={alt}
-      className={`responsive-image ${className}`}
+      className={`responsive-image ${skeletonClass(loaded)} ${className}`}
       style={style}
       loading={priority ? 'eager' : 'lazy'}
-      decoding={priority ? 'sync' : 'async'}
+      decoding="async"
       referrerPolicy={referrerPolicy}
       sizes={sizes}
+      onLoad={markLoaded}
+      onError={markLoaded}
     />
   );
 };
@@ -54,17 +67,14 @@ interface ResponsivePictureProps {
   desktopSrc: ResponsiveImageSource;
   alt: string;
   className?: string;
-  objectFit?: 'cover' | 'contain' | 'fill' | 'scale-down';
+  objectFit?: ObjectFit;
   priority?: boolean;
   referrerPolicy?: React.ImgHTMLAttributes<HTMLImageElement>['referrerPolicy'];
 }
 
 /**
- * ResponsivePicture Component
- * Uses HTML5 <picture> element for device-specific image sources
- * - Mobile: optimized for small screens
- * - Tablet: optimized for medium screens
- * - Desktop: optimized for large screens
+ * Uses <picture> for device-specific hero sources. Only formats that actually
+ * exist are emitted, so the browser never evaluates empty <source> elements.
  */
 export const ResponsivePicture: React.FC<ResponsivePictureProps> = ({
   mobileSrc,
@@ -76,24 +86,30 @@ export const ResponsivePicture: React.FC<ResponsivePictureProps> = ({
   priority = false,
   referrerPolicy = 'no-referrer',
 }) => {
+  const breakpoints = [
+    { media: '(max-width: 640px)', source: mobileSrc },
+    { media: '(max-width: 1024px)', source: tabletSrc },
+    { media: '(min-width: 1025px)', source: desktopSrc },
+  ];
+
   return (
     <div className="responsive-picture">
       <picture className="relative z-10 block h-full w-full">
-      <source media="(max-width: 640px)" srcSet={mobileSrc.avif} type="image/avif" />
-      <source media="(max-width: 640px)" srcSet={mobileSrc.webp} type="image/webp" />
-      <source media="(max-width: 1024px)" srcSet={tabletSrc.avif} type="image/avif" />
-      <source media="(max-width: 1024px)" srcSet={tabletSrc.webp} type="image/webp" />
-      <source media="(min-width: 1025px)" srcSet={desktopSrc.avif} type="image/avif" />
-      <source media="(min-width: 1025px)" srcSet={desktopSrc.webp} type="image/webp" />
-      <img
-        src={desktopSrc.fallback}
-        alt={alt}
-        className={`responsive-image ${className}`}
-        style={{ objectFit }}
-        loading={priority ? 'eager' : 'lazy'}
-        decoding={priority ? 'sync' : 'async'}
-        referrerPolicy={referrerPolicy}
-      />
+        {breakpoints.flatMap(({ media, source }) => [
+          source.avif ? <source key={`${media}-avif`} media={media} srcSet={source.avif} type="image/avif" /> : null,
+          source.webp ? <source key={`${media}-webp`} media={media} srcSet={source.webp} type="image/webp" /> : null,
+          <source key={`${media}-fallback`} media={media} srcSet={source.fallback} />,
+        ])}
+        <img
+          src={desktopSrc.fallback}
+          alt={alt}
+          className={`responsive-image ${className}`}
+          style={{ objectFit }}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+          fetchPriority={priority ? 'high' : 'auto'}
+          referrerPolicy={referrerPolicy}
+        />
       </picture>
     </div>
   );
@@ -107,10 +123,6 @@ interface ResponsiveGalleryImageProps {
   referrerPolicy?: React.ImgHTMLAttributes<HTMLImageElement>['referrerPolicy'];
 }
 
-/**
- * ResponsiveGalleryImage Component
- * Optimized for gallery layouts with proper aspect ratio handling
- */
 export const ResponsiveGalleryImage: React.FC<ResponsiveGalleryImageProps> = ({
   src,
   alt,
@@ -118,15 +130,21 @@ export const ResponsiveGalleryImage: React.FC<ResponsiveGalleryImageProps> = ({
   containerClassName = '',
   referrerPolicy = 'no-referrer',
 }) => {
+  const { ref, loaded, markLoaded } = useImageLoaded();
+
   return (
     <div className={`responsive-image-container ${containerClassName}`}>
       <img
+        ref={ref}
         src={src}
         alt={alt}
-        className={`responsive-gallery-image ${className}`}
+        className={`responsive-gallery-image ${skeletonClass(loaded)} ${className}`}
         loading="lazy"
         decoding="async"
         referrerPolicy={referrerPolicy}
+        draggable={false}
+        onLoad={markLoaded}
+        onError={markLoaded}
       />
     </div>
   );

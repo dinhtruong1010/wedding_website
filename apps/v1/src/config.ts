@@ -37,13 +37,13 @@ export const weddingConfig: WeddingConfig = {
         `${blobBaseUrl}/wedding/story/story_2.jpg`,
         `${blobBaseUrl}/wedding/story/story_3.jpg`,
         `${blobBaseUrl}/wedding/story/story_4.jpg`,
-        `${blobBaseUrl}/wedding/story/story_4.jpg`,
+        `${blobBaseUrl}/wedding/story/story_5.jpg`,
         `${blobBaseUrl}/wedding/story/story_6.jpg`,
-        `${blobBaseUrl}/wedding/story/story_6.jpg`,
+        `${blobBaseUrl}/wedding/story/story_7.jpg`,
         `${blobBaseUrl}/wedding/story/story_8.jpg`,
       ]
     : weddingContent.storyImages,
-  audioUrl: blobBaseUrl ? `${blobBaseUrl}/wedding/audio/Audio.mp3` : weddingContent.audioUrl,
+  audioUrl: blobBaseUrl ? `${blobBaseUrl}/wedding/audio/Audio.m4a` : weddingContent.audioUrl,
   galleryImages: blobBaseUrl
     ? ["IMG_7737.JPG", "IMG_7739.JPG", "IMG_7740.JPG", "IMG_9526.JPG", "IMG_9527.JPG", "IMG_9528.JPG"].map(
         (file) => `${blobBaseUrl}/wedding/gallery/${file}`,
