@@ -3,7 +3,18 @@ export const config = { runtime: "nodejs" };
 type VercelRequest = {
   method?: string;
   body?: unknown;
+  url?: string;
+  query?: Record<string, string | string[] | undefined>;
 };
+
+// "/na" (Nghệ An) shares the Neon database but uses its own tables (*_na),
+// so RSVPs and wishes of the two invitations never mix.
+const resolveSite = (req: VercelRequest) => {
+  const raw = req.query?.site ?? new URL(req.url ?? "/", "http://localhost").searchParams.get("site");
+  return (Array.isArray(raw) ? raw[0] : raw) === "na" ? "na" : "hn";
+};
+// Whitelisted table names only: never built from user input.
+const wishesTable = (req: VercelRequest) => (resolveSite(req) === "na" ? "wedding_wishes_na" : "wedding_wishes");
 
 type VercelResponse = {
   statusCode: number;
@@ -44,19 +55,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const sql = await getDatabase();
+  const table = wishesTable(req);
   if (!sql) {
     return sendJson(res, 503, { error: "Database is not configured" });
   }
 
   try {
     if (req.method === "GET") {
-      const rows = await sql`
-        SELECT id, name, message, created_at
-        FROM wedding_wishes
-        WHERE published = true
-        ORDER BY created_at DESC
-        LIMIT 50
-      ` as WishRow[];
+      const rows = await sql.query(
+        `SELECT id, name, message, created_at
+         FROM ${table}
+         WHERE published = true
+         ORDER BY created_at DESC
+         LIMIT 50`,
+      ) as WishRow[];
 
       res.setHeader("Cache-Control", "no-store, max-age=0");
       return sendJson(res, 200, { wishes: rows.map(toWish) });
@@ -73,11 +85,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return sendJson(res, 400, { error: "Name or message is too long" });
     }
 
-    const rows = await sql`
-      INSERT INTO wedding_wishes (name, message)
-      VALUES (${name}, ${message})
-      RETURNING id, name, message, created_at
-    ` as WishRow[];
+    const rows = await sql.query(
+      `INSERT INTO ${table} (name, message)
+       VALUES ($1, $2)
+       RETURNING id, name, message, created_at`,
+      [name, message],
+    ) as WishRow[];
 
     return sendJson(res, 201, { wish: toWish(rows[0]) });
   } catch (error) {

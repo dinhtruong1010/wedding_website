@@ -4,7 +4,6 @@ import {
   ArrowUp,
   Calendar,
   CalendarPlus,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -25,6 +24,7 @@ import {
 import { weddingConfig, type ResponsiveImageSource, type WeddingConfig } from './config';
 import { ResponsiveImage, ResponsivePicture, ResponsiveGalleryImage } from './components/ResponsiveImage';
 import { CursorEffects } from './components/CursorEffects';
+import { apiUrl, siteId, siteStorageKey } from './site';
 import { Language, languageLabels, localeByLanguage, translations } from './i18n';
 
 // --- Shared helpers ---
@@ -241,6 +241,7 @@ const Navbar = ({ language, onLanguageChange }: NavbarProps) => {
   const activeSection = useActiveSection();
   const t = translations[language];
   const isSolid = isScrolled || isMobileMenuOpen;
+  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -254,8 +255,15 @@ const Navbar = ({ language, onLanguageChange }: NavbarProps) => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setIsMobileMenuOpen(false);
     };
+    const handlePointerDown = (event: PointerEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) setIsMobileMenuOpen(false);
+    };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
   }, [isMobileMenuOpen]);
 
   const navLinks = [
@@ -268,19 +276,12 @@ const Navbar = ({ language, onLanguageChange }: NavbarProps) => {
 
   return (
     <nav
+      ref={navRef}
       className={`fixed top-0 z-50 w-full transition-all duration-300 ${
         isSolid ? 'bg-surface/85 py-3 shadow-[0_8px_30px_-18px_rgba(184,77,112,0.45)] backdrop-blur-md' : 'bg-transparent py-5 md:py-6'
       }`}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 md:px-6">
-        <a
-          href="#top"
-          onClick={() => setIsMobileMenuOpen(false)}
-          className={`truncate font-names text-[1.7rem] font-normal transition-colors xl:text-[2rem] ${isSolid ? 'text-primary' : 'text-white drop-shadow'}`}
-        >
-          {weddingConfig.groomName} <span className="text-primary-soft">&</span> {weddingConfig.brideName}
-        </a>
-
+      <div className="mx-auto flex max-w-7xl items-center justify-end gap-4 px-5 md:px-6 xl:justify-center">
         {/* Desktop Nav */}
         <div className="hidden min-w-0 items-center gap-2 xl:flex">
           <div className="flex min-w-0 flex-nowrap items-center gap-1">
@@ -532,12 +533,6 @@ const Hero = ({ language, heroImages, isOpened }: HeroProps) => {
         <motion.p variants={heroItem} className="mx-auto mt-6 max-w-2xl font-headline text-lg italic leading-relaxed text-white/95 md:text-2xl">
           “{t.hero.intro}”
         </motion.p>
-        <motion.div variants={heroItem} className="mt-10">
-          <a href="#story" className="inline-flex flex-col items-center gap-2 text-white transition-opacity hover:opacity-80">
-            <span className="font-label text-xs font-bold uppercase tracking-[0.25em]">{t.hero.cta}</span>
-            <ChevronDown size={28} className="animate-bounce" aria-hidden="true" />
-          </a>
-        </motion.div>
       </motion.div>
     </section>
   );
@@ -734,8 +729,8 @@ interface Wish {
   createdAt?: string;
 }
 
-const RSVP_SUBMISSION_ID_KEY = 'wedding-rsvp-submission-id';
-const RSVP_RESPONSE_KEY = 'wedding-rsvp-response';
+const RSVP_SUBMISSION_ID_KEY = siteStorageKey('wedding-rsvp-submission-id');
+const RSVP_RESPONSE_KEY = siteStorageKey('wedding-rsvp-response');
 const WISHES_PAGE_SIZE = 6;
 
 /** Page list with gaps, e.g. 1 … 4 5 6 … 12. Always shows first, last and neighbours. */
@@ -857,7 +852,7 @@ const RsvpAndWishes = ({ language, wishes, onWishSubmitted }: RsvpWishesProps) =
     setError(null);
 
     try {
-      const payload = await postJson('/api/rsvps', {
+      const payload = await postJson(apiUrl('/api/rsvps'), {
         guestName,
         attending,
         partySize,
@@ -876,7 +871,7 @@ const RsvpAndWishes = ({ language, wishes, onWishSubmitted }: RsvpWishesProps) =
 
     if (wishMessage) {
       try {
-        const payload = await postJson('/api/wishes', { name: guestName, message: wishMessage });
+        const payload = await postJson(apiUrl('/api/wishes'), { name: guestName, message: wishMessage });
         if (!payload?.wish) throw new Error('Unable to send wish');
         onWishSubmitted(payload.wish);
         setPage(1);
@@ -1363,7 +1358,7 @@ const GalleryPhoto = ({ src, index, alt, onSelect, featured = false, openLabel }
           className="aspect-[3/4] w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
         />
         <span aria-hidden="true" className="absolute bottom-2.5 left-0 right-0 flex items-center justify-center gap-1 font-display text-lg text-primary/80">
-          <Heart size={10} fill="currentColor" /> {String(index + 1).padStart(2, '0')}
+          <Heart size={12} fill="currentColor" />
         </span>
       </motion.span>
     </motion.button>
@@ -1618,6 +1613,12 @@ export default function App() {
     document.documentElement.lang = language;
   }, [language]);
 
+  // index.html carries the Hà Nội title; keep the tab title in sync with the active site.
+  useEffect(() => {
+    if (siteId === 'hn') return;
+    document.title = `${weddingConfig.groomName} & ${weddingConfig.brideName} · ${shortWeddingDate()} · ${weddingConfig.locationName}`;
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const markReady = () => {
@@ -1625,7 +1626,7 @@ export default function App() {
     };
     const safetyTimer = window.setTimeout(markReady, MAX_LOADING_MS);
 
-    fetch('/api/wedding-content', { cache: 'no-store' })
+    fetch(apiUrl('/api/wedding-content'), { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : null))
       .then(async (payload) => {
         const nextConfig = payload?.config ? { ...weddingConfig, ...payload.config } : weddingConfig;
@@ -1660,7 +1661,7 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch('/api/wishes', { cache: 'no-store' })
+    fetch(apiUrl('/api/wishes'), { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
         if (!cancelled && Array.isArray(payload?.wishes)) setWishes(payload.wishes);
@@ -1675,7 +1676,25 @@ export default function App() {
   // Always open the invitation from the hero, not wherever the guest was before a reload.
   useEffect(() => {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+    if (window.location.hash) window.history.replaceState(null, '', window.location.pathname + window.location.search);
     window.scrollTo(0, 0);
+  }, []);
+
+  // In-page links (#story, #rsvp...) scroll smoothly without leaving a #hash in the URL,
+  // so a reload or a shared link never drops the guest at the bottom of the page.
+  useEffect(() => {
+    const handleClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = (event.target as Element | null)?.closest?.('a[href^="#"]');
+      const id = link?.getAttribute('href')?.slice(1);
+      if (!id) return;
+      const target = document.getElementById(id);
+      if (!target) return;
+      event.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
   }, []);
 
   // Lock page scroll while the invitation cover is shown.
@@ -1731,13 +1750,8 @@ export default function App() {
     setIsOpened(true);
     // The click on "Open invitation" is a user gesture, so browsers allow playback.
     if (!isMuted) playAudio();
-    // Deep links like /#rsvp: scroll there once the cover has faded out.
-    const targetId = decodeURIComponent(window.location.hash.slice(1));
-    if (targetId) {
-      window.setTimeout(() => document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' }), 650);
-    } else {
-      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-    }
+    // Always start the invitation from the hero, even if the URL carries a stale #hash.
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   };
 
   const toggleAudio = () => {
