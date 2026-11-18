@@ -12,8 +12,14 @@ export const localeByLanguage: Record<Language, string> = {
 
 export const translations = {
   vi: {
+    cover: {
+      invite: 'Trân trọng kính mời bạn đến dự lễ cưới của',
+      loading: 'Đang chuẩn bị thiệp',
+      open: 'Mở thiệp',
+      hint: 'Chạm để mở thiệp và bật nhạc',
+    },
     nav: {
-      story: 'Câu chuyện',
+      story: 'Love Story',
       details: 'Thông tin',
       gallery: 'Album ảnh',
       gifts: 'Mừng cưới',
@@ -23,11 +29,12 @@ export const translations = {
     hero: {
       alt: 'Đình Trường và Thanh Ngà',
       intro: 'Chúng mình sắp kết hôn và rất mong được cùng bạn chung vui trong ngày đặc biệt này.',
+      saveTheDate: 'Save the date',
       cta: 'Xem câu chuyện',
     },
     story: {
       eyebrow: 'Hành trình yêu thương',
-      title: 'Câu chuyện của chúng mình',
+      title: 'Love Story',
       imageAlt: 'Câu chuyện của chúng mình',
       timeline: [
         {
@@ -81,9 +88,18 @@ export const translations = {
       timeSub: 'GIỜ LÀM LỄ',
       locationTitle: 'Địa điểm',
       viewMap: 'Xem bản đồ',
+      addToCalendar: 'Thêm vào lịch',
+    },
+    countdown: {
+      title: 'Đếm ngược đến ngày vui',
+      days: 'Ngày',
+      hours: 'Giờ',
+      minutes: 'Phút',
+      seconds: 'Giây',
+      arrived: 'Hôm nay là ngày vui của chúng mình!',
     },
     rsvp: {
-      eyebrow: 'Phản hồi',
+      eyebrow: 'Xác nhận & Lời chúc',
       title: 'Bạn sẽ đến chung vui cùng chúng mình chứ?',
       nameLabel: 'Tên của bạn',
       namePlaceholder: 'Nhập tên của bạn',
@@ -95,6 +111,13 @@ export const translations = {
       submitting: 'Đang gửi...',
       success: 'Cảm ơn bạn đã phản hồi.',
       error: 'Chưa thể lưu phản hồi. Vui lòng thử lại.',
+      successTitle: 'Cảm ơn bạn nhiều nha!',
+      successAttending: 'Chúng mình rất mong được gặp bạn trong ngày vui.',
+      successNotAttending: 'Tiếc quá! Cảm ơn bạn đã báo cho chúng mình biết.',
+      edit: 'Sửa phản hồi',
+      messageLabel: 'Gửi lời chúc (không bắt buộc)',
+      messagePlaceholder: 'Viết đôi lời yêu thương cho cô dâu chú rể...',
+      wishError: 'Đã lưu xác nhận, nhưng lời chúc chưa gửi được. Bạn thử gửi lại nhé.',
     },
     gallery: {
       eyebrow: 'Khoảnh khắc yêu thương',
@@ -134,6 +157,11 @@ export const translations = {
       success: 'Lời chúc của bạn đã được gửi.',
       error: 'Chưa thể gửi lời chúc. Vui lòng thử lại.',
       recent: 'Lời chúc gần đây',
+      showMore: 'Xem thêm lời chúc',
+      showLess: 'Thu gọn',
+      pagination: 'Phân trang lời chúc',
+      previousPage: 'Trang trước',
+      nextPage: 'Trang sau',
       wishes: [
         { name: 'Gia đình và bạn bè', message: 'Chúc hai bạn trăm năm hạnh phúc, luôn yêu thương và đồng hành cùng nhau.' },
         { name: 'Một người bạn thân', message: 'Mong ngày vui của hai bạn thật rực rỡ và đầy ắp tiếng cười.' },
@@ -142,18 +170,28 @@ export const translations = {
       ],
     },
     footer: {
-      privacy: 'Chính sách riêng tư',
-      contact: 'Liên hệ',
+      thanks: 'Cảm ơn bạn đã là một phần trong câu chuyện của chúng mình',
+      backToTop: 'Lên đầu trang',
     },
     language: {
       label: 'Ngôn ngữ',
     },
+    audio: {
+      on: 'Bật nhạc',
+      off: 'Tắt nhạc',
+    },
   },
   en: {
+    cover: {
+      invite: 'You are warmly invited to the wedding of',
+      loading: 'Preparing your invitation',
+      open: 'Open invitation',
+      hint: 'Tap to open and play music',
+    },
     nav: {
-      story: 'Our Story',
-      details: 'Wedding Details',
-      gallery: 'Gallery',
+      story: 'Love Story',
+      details: 'Details',
+      gallery: 'Album',
       gifts: 'Gifts',
       wishes: 'Wishes',
       rsvp: 'RSVP',
@@ -161,12 +199,13 @@ export const translations = {
     hero: {
       alt: 'Dinh Truong and Thanh Nga',
       intro: 'We are getting married and would love to celebrate this special day with you.',
-      cta: 'View Our Story',
+      saveTheDate: 'Save the date',
+      cta: 'View Love Story',
     },
     story: {
       eyebrow: 'A Journey of Love',
-      title: 'Our Story',
-      imageAlt: 'Our Story',
+      title: 'Love Story',
+      imageAlt: 'Love Story',
       timeline: [
         {
           title: 'The Fateful Ticket',
@@ -212,16 +251,25 @@ export const translations = {
     },
     details: {
       eyebrow: 'The Celebration',
-      title: 'Wedding Details',
+      title: 'Details',
       dateTitle: 'The Date',
       dateSub: 'SAVE THE DATE',
       timeTitle: 'The Time',
       timeSub: 'CEREMONY TIME',
       locationTitle: 'Location',
       viewMap: 'View Map',
+      addToCalendar: 'Add to calendar',
+    },
+    countdown: {
+      title: 'Counting down to our big day',
+      days: 'Days',
+      hours: 'Hours',
+      minutes: 'Minutes',
+      seconds: 'Seconds',
+      arrived: 'Today is our wedding day!',
     },
     rsvp: {
-      eyebrow: 'Response',
+      eyebrow: 'RSVP & Wishes',
       title: 'Will you celebrate with us?',
       nameLabel: 'Your Name',
       namePlaceholder: 'Enter your name',
@@ -233,10 +281,17 @@ export const translations = {
       submitting: 'Sending...',
       success: 'Thank you for your response.',
       error: 'We could not save your response. Please try again.',
+      successTitle: 'Thank you so much!',
+      successAttending: 'We can’t wait to celebrate with you.',
+      successNotAttending: 'We’ll miss you! Thanks for letting us know.',
+      edit: 'Edit response',
+      messageLabel: 'Leave a wish (optional)',
+      messagePlaceholder: 'Write a few loving words for the couple...',
+      wishError: 'Your RSVP was saved, but your wish could not be sent. Please try again.',
     },
     gallery: {
       eyebrow: 'Memories Captured',
-      title: 'Photo Gallery',
+      title: 'Album',
       altPrefix: 'Wedding photo',
       showAll: 'Show all photos',
       showLess: 'Show fewer photos',
@@ -272,6 +327,11 @@ export const translations = {
       success: 'Your wish has been sent.',
       error: 'We could not send your wish. Please try again.',
       recent: 'Recent Wishes',
+      showMore: 'Show more wishes',
+      showLess: 'Show less',
+      pagination: 'Wishes pages',
+      previousPage: 'Previous page',
+      nextPage: 'Next page',
       wishes: [
         { name: 'Family & Friends', message: 'Wishing you both a lifetime of happiness, love, and partnership.' },
         { name: 'A Dear Friend', message: 'May your wedding day be radiant and filled with laughter.' },
@@ -280,11 +340,15 @@ export const translations = {
       ],
     },
     footer: {
-      privacy: 'Privacy Policy',
-      contact: 'Contact Us',
+      thanks: 'Thank you for being part of our story',
+      backToTop: 'Back to top',
     },
     language: {
       label: 'Language',
+    },
+    audio: {
+      on: 'Turn music on',
+      off: 'Turn music off',
     },
   },
 } as const;
