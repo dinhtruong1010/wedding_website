@@ -3,7 +3,18 @@ export const config = { runtime: "nodejs" };
 type VercelRequest = {
   method?: string;
   body?: unknown;
+  url?: string;
+  query?: Record<string, string | string[] | undefined>;
 };
+
+// "/na" (Nghệ An) shares the Neon database but uses its own tables (*_na),
+// so RSVPs and wishes of the two invitations never mix.
+const resolveSite = (req: VercelRequest) => {
+  const raw = req.query?.site ?? new URL(req.url ?? "/", "http://localhost").searchParams.get("site");
+  return (Array.isArray(raw) ? raw[0] : raw) === "na" ? "na" : "hn";
+};
+// Whitelisted table names only: never built from user input.
+const rsvpsTable = (req: VercelRequest) => (resolveSite(req) === "na" ? "wedding_rsvps_na" : "wedding_rsvps");
 
 type VercelResponse = {
   statusCode: number;
@@ -43,7 +54,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return sendJson(res, 405, { error: "Method not allowed" });
   }
 
-  if (!process.env.DATABASE_URL) {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
     return sendJson(res, 503, { error: "Database is not configured" });
   }
 
@@ -68,17 +80,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { neon } = await import("@neondatabase/serverless");
-    const sql = neon(process.env.DATABASE_URL);
-    const rows = await sql`
-      INSERT INTO wedding_rsvps (guest_name, attending, party_size, client_submission_id)
-      VALUES (${guestName}, ${attending}, ${partySize}, ${submissionId}::uuid)
-      ON CONFLICT (client_submission_id) DO UPDATE
-      SET guest_name = EXCLUDED.guest_name,
-          attending = EXCLUDED.attending,
-          party_size = EXCLUDED.party_size,
-          updated_at = now()
-      RETURNING id, guest_name, attending, party_size, created_at, updated_at
-    ` as RsvpRow[];
+    const sql = neon(databaseUrl);
+    const rows = await sql.query(
+      `INSERT INTO ${rsvpsTable(req)} (guest_name, attending, party_size, client_submission_id)
+       VALUES ($1, $2, $3, $4::uuid)
+       ON CONFLICT (client_submission_id) DO UPDATE
+       SET guest_name = EXCLUDED.guest_name,
+           attending = EXCLUDED.attending,
+           party_size = EXCLUDED.party_size,
+           updated_at = now()
+       RETURNING id, guest_name, attending, party_size, created_at, updated_at`,
+      [guestName, attending, partySize, submissionId],
+    ) as RsvpRow[];
 
     return sendJson(res, 201, { rsvp: toRsvp(rows[0]) });
   } catch (error) {

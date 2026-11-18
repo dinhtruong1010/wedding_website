@@ -1,4 +1,5 @@
 import weddingContent from "./wedding-content.json";
+import { siteId, siteOverrides } from "./site";
 
 export interface WeddingConfig {
   groomName: string;
@@ -31,6 +32,7 @@ const blobBaseUrl = (import.meta.env.VITE_BLOB_PUBLIC_BASE_URL ?? "").replace(/\
 
 export const weddingConfig: WeddingConfig = {
   ...weddingContent,
+  ...siteOverrides[siteId],
   storyImages: blobBaseUrl
     ? [
         `${blobBaseUrl}/wedding/story/story_1.jpg`,

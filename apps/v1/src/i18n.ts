@@ -30,7 +30,6 @@ export const translations = {
       alt: 'Đình Trường và Thanh Ngà',
       intro: 'Chúng mình sắp kết hôn và rất mong được cùng bạn chung vui trong ngày đặc biệt này.',
       saveTheDate: 'Save the date',
-      cta: 'Xem câu chuyện',
     },
     story: {
       eyebrow: 'Hành trình yêu thương',
@@ -200,7 +199,6 @@ export const translations = {
       alt: 'Dinh Truong and Thanh Nga',
       intro: 'We are getting married and would love to celebrate this special day with you.',
       saveTheDate: 'Save the date',
-      cta: 'View Love Story',
     },
     story: {
       eyebrow: 'A Journey of Love',

@@ -1,6 +1,17 @@
 export const config = { runtime: "nodejs" };
 
-type VercelRequest = { method?: string };
+type VercelRequest = {
+  method?: string;
+  url?: string;
+  query?: Record<string, string | string[] | undefined>;
+};
+
+// "/na" (Nghệ An) shares the Neon database but uses its own tables (*_na),
+// so RSVPs and wishes of the two invitations never mix.
+const resolveSite = (req: VercelRequest) => {
+  const raw = req.query?.site ?? new URL(req.url ?? "/", "http://localhost").searchParams.get("site");
+  return (Array.isArray(raw) ? raw[0] : raw) === "na" ? "na" : "hn";
+};
 type VercelResponse = {
   statusCode: number;
   setHeader: (name: string, value: string) => void;
@@ -56,11 +67,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Neon owns editable text/configuration. Media is resolved from Blob below,
     // so stale gallery/audio values in the database cannot override Blob files.
-    if (process.env.DATABASE_URL) {
+    const databaseUrl = process.env.DATABASE_URL;
+    if (databaseUrl) {
       try {
         const { neon } = await import("@neondatabase/serverless");
-        const sql = neon(process.env.DATABASE_URL);
-        const rows = await sql`SELECT value FROM wedding_config WHERE version = 'v1' AND key = 'wedding' LIMIT 1`;
+        const sql = neon(databaseUrl);
+        const rows = await sql`SELECT value FROM wedding_config WHERE version = ${resolveSite(req) === "na" ? "na" : "v1"} AND key = 'wedding' LIMIT 1`;
         const stored = rows[0]?.value as WeddingMediaConfig | undefined;
         if (stored) {
           config = { ...config, ...stored };
