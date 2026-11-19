@@ -48,6 +48,20 @@ const toRsvp = (row: RsvpRow) => ({
   updatedAt: row.updated_at,
 });
 
+/** Removes control and invisible (zero-width / bidi override) characters; keeps newlines and tabs. */
+const cleanText = (value: unknown) =>
+  typeof value === "string"
+    ? value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/g, "").trim()
+    : "";
+
+/**
+ * Cheap bot filter, invisible to guests: the hidden "website" field is only filled by
+ * bots, and nobody types a real answer in under 2 seconds. Bots get a fake success so
+ * they don't retry. (Add a Vercel Firewall rate-limit rule for POST /api/* on top.)
+ */
+const looksLikeBot = (body: Record<string, unknown>) =>
+  cleanText(body.website) !== "" || (typeof body.elapsedMs === "number" && body.elapsedMs < 2000);
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -60,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const body = req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {};
-  const guestName = typeof body.guestName === "string" ? body.guestName.trim() : "";
+  const guestName = cleanText(body.guestName);
   const attending = body.attending;
   const requestedPartySize = body.partySize;
   const partySizeValue = typeof requestedPartySize === "number" ? requestedPartySize : NaN;
@@ -77,6 +91,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const partySize = attending ? partySizeValue : 0;
+
+  if (looksLikeBot(body)) {
+    const now = new Date().toISOString();
+    return sendJson(res, 201, { rsvp: { id: submissionId, guestName, attending, partySize, createdAt: now, updatedAt: now } });
+  }
 
   try {
     const { neon } = await import("@neondatabase/serverless");

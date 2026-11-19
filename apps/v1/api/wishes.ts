@@ -7,14 +7,8 @@ type VercelRequest = {
   query?: Record<string, string | string[] | undefined>;
 };
 
-// "/na" (Nghệ An) shares the Neon database but uses its own tables (*_na),
-// so RSVPs and wishes of the two invitations never mix.
-const resolveSite = (req: VercelRequest) => {
-  const raw = req.query?.site ?? new URL(req.url ?? "/", "http://localhost").searchParams.get("site");
-  return (Array.isArray(raw) ? raw[0] : raw) === "na" ? "na" : "hn";
-};
-// Whitelisted table names only: never built from user input.
-const wishesTable = (req: VercelRequest) => (resolveSite(req) === "na" ? "wedding_wishes_na" : "wedding_wishes");
+// Wishes are shared by both invitations (/ and /na): one wall, one table.
+const WISHES_TABLE = "wedding_wishes";
 
 type VercelResponse = {
   statusCode: number;
@@ -42,6 +36,20 @@ const toWish = (row: WishRow) => ({
   createdAt: row.created_at,
 });
 
+/** Removes control and invisible (zero-width / bidi override) characters; keeps newlines and tabs. */
+const cleanText = (value: unknown) =>
+  typeof value === "string"
+    ? value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/g, "").trim()
+    : "";
+
+/**
+ * Cheap bot filter, invisible to guests: the hidden "website" field is only filled by
+ * bots, and nobody types a real answer in under 2 seconds. Bots get a fake success so
+ * they don't retry. (Add a Vercel Firewall rate-limit rule for POST /api/* on top.)
+ */
+const looksLikeBot = (body: Record<string, unknown>) =>
+  cleanText(body.website) !== "" || (typeof body.elapsedMs === "number" && body.elapsedMs < 2000);
+
 const getDatabase = async () => {
   if (!process.env.DATABASE_URL) return null;
   const { neon } = await import("@neondatabase/serverless");
@@ -55,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const sql = await getDatabase();
-  const table = wishesTable(req);
+  const table = WISHES_TABLE;
   if (!sql) {
     return sendJson(res, 503, { error: "Database is not configured" });
   }
@@ -70,19 +78,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
          LIMIT 50`,
       ) as WishRow[];
 
-      res.setHeader("Cache-Control", "no-store, max-age=0");
+      // Short CDN cache absorbs bursts (everyone opening the link at once). A guest's own
+      // new wish is added to the wall client-side, so a few seconds of staleness is fine.
+      res.setHeader("Cache-Control", "public, max-age=0, s-maxage=15, stale-while-revalidate=60");
       return sendJson(res, 200, { wishes: rows.map(toWish) });
     }
 
     const body = req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {};
-    const name = typeof body.name === "string" ? body.name.trim() : "";
-    const message = typeof body.message === "string" ? body.message.trim() : "";
+    const name = cleanText(body.name);
+    const message = cleanText(body.message);
 
     if (!name || !message) {
       return sendJson(res, 400, { error: "Name and message are required" });
     }
     if (name.length > 120 || message.length > 1000) {
       return sendJson(res, 400, { error: "Name or message is too long" });
+    }
+
+    if (looksLikeBot(body)) {
+      return sendJson(res, 201, { wish: { id: crypto.randomUUID(), name, message, createdAt: new Date().toISOString() } });
+    }
+
+    // A retry after a lost response (flaky 4G) must not post the same wish twice.
+    const duplicate = await sql.query(
+      `SELECT id, name, message, created_at
+       FROM ${table}
+       WHERE name = $1 AND message = $2 AND created_at > now() - interval '10 minutes'
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [name, message],
+    ) as WishRow[];
+    if (duplicate[0]) {
+      return sendJson(res, 200, { wish: toWish(duplicate[0]) });
     }
 
     const rows = await sql.query(

@@ -19,6 +19,36 @@ const useImageLoaded = () => {
 
 const skeletonClass = (loaded: boolean) => `img-skeleton${loaded ? ' is-loaded' : ''}`;
 
+/** Widths allowed by `images.sizes` in vercel.json. */
+const IMAGE_WIDTHS = [480, 960, 1600] as const;
+export type ImageWidth = (typeof IMAGE_WIDTHS)[number];
+
+/**
+ * Vercel Image Optimization resizes and converts to AVIF/WebP on the fly, so the
+ * 1-1.6 MB originals are never sent to phones. Only on deployed builds: `vite dev`
+ * and `vite preview` have no /_vercel/image endpoint.
+ */
+const useOptimizer = import.meta.env.PROD && !/^(localhost|127\.|192\.168\.|10\.)/.test(window.location.hostname);
+
+/** Must match `images.localPatterns` / `remotePatterns` in vercel.json. */
+const canOptimize = (url: string) =>
+  useOptimizer && (url.startsWith('/data/') || /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\/wedding\//.test(url));
+
+export const optimizedSrc = (url: string, width: ImageWidth) =>
+  canOptimize(url) ? `/_vercel/image?url=${encodeURIComponent(url)}&w=${width}&q=75` : url;
+
+export const optimizedSrcSet = (url: string) =>
+  canOptimize(url) ? IMAGE_WIDTHS.map((width) => `${optimizedSrc(url, width)} ${width}w`).join(', ') : undefined;
+
+/** If the optimizer ever fails, fall back to the original file once. */
+const fallBackToOriginal = (original: string) => (event: React.SyntheticEvent<HTMLImageElement>) => {
+  const image = event.currentTarget;
+  if (image.dataset.fallback || !canOptimize(original)) return;
+  image.dataset.fallback = '1';
+  image.removeAttribute('srcset');
+  image.src = original;
+};
+
 interface ResponsiveImageProps {
   src: string;
   alt: string;
@@ -27,6 +57,8 @@ interface ResponsiveImageProps {
   objectFit?: ObjectFit;
   sizes?: string;
   aspectRatio?: string; // e.g., '16/9', '4/3', '3/4'
+  /** Set false to always serve the original file (e.g. QR codes guests save). */
+  optimize?: boolean;
   referrerPolicy?: React.ImgHTMLAttributes<HTMLImageElement>['referrerPolicy'];
 }
 
@@ -38,6 +70,7 @@ export const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
   objectFit = 'cover',
   sizes,
   aspectRatio,
+  optimize = true,
   referrerPolicy = 'no-referrer',
 }) => {
   const { ref, loaded, markLoaded } = useImageLoaded();
@@ -47,16 +80,20 @@ export const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
   return (
     <img
       ref={ref}
-      src={src}
+      src={optimize ? optimizedSrc(src, 960) : src}
+      srcSet={optimize ? optimizedSrcSet(src) : undefined}
+      sizes={optimize ? sizes ?? '(max-width: 768px) 100vw, 50vw' : undefined}
       alt={alt}
       className={`responsive-image ${skeletonClass(loaded)} ${className}`}
       style={style}
       loading={priority ? 'eager' : 'lazy'}
       decoding="async"
       referrerPolicy={referrerPolicy}
-      sizes={sizes}
       onLoad={markLoaded}
-      onError={markLoaded}
+      onError={(event) => {
+        fallBackToOriginal(src)(event);
+        markLoaded();
+      }}
     />
   );
 };
@@ -120,6 +157,7 @@ interface ResponsiveGalleryImageProps {
   alt: string;
   className?: string;
   containerClassName?: string;
+  sizes?: string;
   referrerPolicy?: React.ImgHTMLAttributes<HTMLImageElement>['referrerPolicy'];
 }
 
@@ -128,6 +166,7 @@ export const ResponsiveGalleryImage: React.FC<ResponsiveGalleryImageProps> = ({
   alt,
   className = 'w-full h-auto object-cover',
   containerClassName = '',
+  sizes = '(max-width: 640px) 50vw, 360px',
   referrerPolicy = 'no-referrer',
 }) => {
   const { ref, loaded, markLoaded } = useImageLoaded();
@@ -136,7 +175,9 @@ export const ResponsiveGalleryImage: React.FC<ResponsiveGalleryImageProps> = ({
     <div className={`responsive-image-container ${containerClassName}`}>
       <img
         ref={ref}
-        src={src}
+        src={optimizedSrc(src, 480)}
+        srcSet={optimizedSrcSet(src)}
+        sizes={sizes}
         alt={alt}
         className={`responsive-gallery-image ${skeletonClass(loaded)} ${className}`}
         loading="lazy"
@@ -144,7 +185,10 @@ export const ResponsiveGalleryImage: React.FC<ResponsiveGalleryImageProps> = ({
         referrerPolicy={referrerPolicy}
         draggable={false}
         onLoad={markLoaded}
-        onError={markLoaded}
+        onError={(event) => {
+          fallBackToOriginal(src)(event);
+          markLoaded();
+        }}
       />
     </div>
   );

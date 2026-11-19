@@ -19,6 +19,7 @@ export const translations = {
       hint: 'Chạm để mở thiệp và bật nhạc',
     },
     nav: {
+      menu: 'Mở menu',
       story: 'Love Story',
       details: 'Thông tin',
       gallery: 'Album ảnh',
@@ -28,8 +29,7 @@ export const translations = {
     },
     hero: {
       alt: 'Đình Trường và Thanh Ngà',
-      intro: 'Chúng mình sắp kết hôn và rất mong được cùng bạn chung vui trong ngày đặc biệt này.',
-      saveTheDate: 'Save the date',
+      intro: 'We are getting married and would love to celebrate this special day with you.',
     },
     story: {
       eyebrow: 'Hành trình yêu thương',
@@ -44,7 +44,7 @@ export const translations = {
         {
           title: 'Lời ngỏ đầu tiên',
           date: '17.04.2025',
-          description: 'Từ một tin nhắn hỏi han, những cuộc trò chuyện cứ thế dài thêm mỗi tối. Rồi một ngày tháng Tư se lạnh, anh không muốn chỉ là “người mua lại vé xe” nữa. Anh ngỏ lời, và em đã gật đầu.',
+          description: 'Từ một tin nhắn hỏi han, những cuộc trò chuyện cứ thế dài thêm mỗi tối. Rồi một ngày tháng Tư se lạnh, anh không muốn chỉ là “người mua lại vé xe” nữa. Một câu ngỏ lời, và ai đó đã gật đầu.',
         },
         {
           title: 'Chuyến đi đầu tiên',
@@ -54,7 +54,7 @@ export const translations = {
         {
           title: 'Bắt đầu yêu xa',
           date: '30.08.2025',
-          description: 'Một người ở Hà Nội, một người ở Singapore. Từ đó, yêu thương được gửi qua màn hình nhỏ, qua những câu “ngủ ngon nhé” và những cuộc gọi chẳng ai nỡ tắt trước.',
+          description: 'Một người ở Hà Nội, một người ở Singapore. Từ đó, yêu thương được gửi qua màn hình nhỏ, qua những câu “ngủ ngon nhé” và những cuộc gọi chẳng ai nỡ tắt trước. Những ngày nỗi nhớ không thể nào đếm hết...',
         },
         {
           title: 'Những chuyến bay mang theo cái ôm',
@@ -64,12 +64,12 @@ export const translations = {
         {
           title: 'Lời cầu hôn dưới hoàng hôn',
           date: '27.04.2026 · MALAYSIA',
-          description: 'Gần một năm sau lời ngỏ đầu tiên, dưới ánh hoàng hôn rực rỡ của Tioman, anh hỏi em câu hỏi quan trọng nhất cuộc đời mình. Và em đã nói “Em đồng ý”.',
+          description: 'Hơn một năm sau lời ngỏ đầu tiên, dưới ánh hoàng hôn rực rỡ của Tioman, anh hỏi em câu hỏi quan trọng nhất cuộc đời mình. Và em đã nói “Em đồng ý”.',
         },
         {
           title: 'Khép lại hành trình yêu xa',
           date: '24.10.2026',
-          description: 'Hơn một năm dài đằng đẵng, cuối cùng cũng đến ngày không phải nói “hẹn gặp lại” nữa. Không còn lệch múi giờ, không còn đếm ngày. Chỉ còn hai người, chung một bầu trời.',
+          description: 'Hơn một năm dài đằng đẵng, cuối cùng cũng đến ngày không phải nói “em tắt máy trước đi” và “anh ngủ ngon nhé”. Chỉ còn hai người, chung một bầu trời, một múi giờ.',
         },
         {
           title: 'Về chung một nhà',
@@ -88,6 +88,7 @@ export const translations = {
       locationTitle: 'Địa điểm',
       viewMap: 'Xem bản đồ',
       addToCalendar: 'Thêm vào lịch',
+      calendarEvent: 'Đám cưới',
     },
     countdown: {
       title: 'Đếm ngược đến ngày vui',
@@ -96,6 +97,7 @@ export const translations = {
       minutes: 'Phút',
       seconds: 'Giây',
       arrived: 'Hôm nay là ngày vui của chúng mình!',
+      past: 'Cảm ơn mọi người đã đến chung vui cùng chúng mình!',
     },
     rsvp: {
       eyebrow: 'Xác nhận & Lời chúc',
@@ -103,6 +105,9 @@ export const translations = {
       nameLabel: 'Tên của bạn',
       namePlaceholder: 'Nhập tên của bạn',
       attendanceLabel: 'Bạn sẽ tham dự?',
+      requiredNote: 'Mục bắt buộc',
+      nameRequired: 'Bạn vui lòng nhập tên nhé.',
+      attendanceRequired: 'Bạn chọn giúp chúng mình là có đến được không nhé.',
       attending: 'Sẽ đến chung vui',
       notAttending: 'Không đến được',
       partySizeLabel: 'Số người tham dự',
@@ -140,6 +145,7 @@ export const translations = {
       showQr: 'Hiện mã QR',
       hideQr: 'Ẩn mã QR',
       downloadQr: 'Tải mã QR',
+      saveHint: 'Nhấn giữ ảnh QR để lưu về máy',
       groomNote: 'Quét mã để gửi quà mừng tới',
       brideNote: 'Quét mã để gửi quà mừng tới',
     },
@@ -156,6 +162,7 @@ export const translations = {
       success: 'Lời chúc của bạn đã được gửi.',
       error: 'Chưa thể gửi lời chúc. Vui lòng thử lại.',
       recent: 'Lời chúc gần đây',
+      empty: 'Chưa có lời chúc nào. Hãy là người đầu tiên gửi lời chúc nhé!',
       showMore: 'Xem thêm lời chúc',
       showLess: 'Thu gọn',
       pagination: 'Phân trang lời chúc',
@@ -188,6 +195,7 @@ export const translations = {
       hint: 'Tap to open and play music',
     },
     nav: {
+      menu: 'Open menu',
       story: 'Love Story',
       details: 'Details',
       gallery: 'Album',
@@ -198,7 +206,6 @@ export const translations = {
     hero: {
       alt: 'Dinh Truong and Thanh Nga',
       intro: 'We are getting married and would love to celebrate this special day with you.',
-      saveTheDate: 'Save the date',
     },
     story: {
       eyebrow: 'A Journey of Love',
@@ -213,7 +220,7 @@ export const translations = {
         {
           title: 'The First Confession',
           date: '17.04.2025',
-          description: 'From a simple message, conversations grew longer every night. Then, on a chilly April day, he no longer wanted to be only the “ticket buyer”. He asked, and she said yes.',
+          description: 'From a simple message, conversations grew longer every night. Then, on a chilly April day, he no longer wanted to be only the “ticket buyer”. One question, and someone said yes.',
         },
         {
           title: 'Our First Trip',
@@ -223,7 +230,7 @@ export const translations = {
         {
           title: 'Beginning Long Distance',
           date: '30.08.2025',
-          description: 'One of us in Hanoi, the other in Singapore. Love travelled through a small screen, goodnight messages, and calls neither of us wanted to end first.',
+          description: 'One of us in Hanoi, the other in Singapore. Love travelled through a small screen, goodnight messages, and calls neither of us wanted to end first. Days of missing each other we could never count...',
         },
         {
           title: 'Flights Carrying Hugs',
@@ -233,12 +240,12 @@ export const translations = {
         {
           title: 'A Proposal at Sunset',
           date: '27.04.2026 · MALAYSIA',
-          description: 'Almost a year after that first confession, beneath Tioman’s vivid sunset, he asked the most important question of his life. And she said, “I do”.',
+          description: 'More than a year after that first confession, beneath Tioman’s vivid sunset, he asked the most important question of his life. And she said, “I do”.',
         },
         {
           title: 'The End of Long Distance',
           date: '24.10.2026',
-          description: 'After more than a year, the day finally came when we no longer had to say goodbye. No more time zones, no more counting days. Just two people beneath one sky.',
+          description: 'After more than a year, the day finally came when we no longer had to say “you hang up first” and “good night”. Just two people beneath one sky, in one time zone.',
         },
         {
           title: 'Coming Home Together',
@@ -257,6 +264,7 @@ export const translations = {
       locationTitle: 'Location',
       viewMap: 'View Map',
       addToCalendar: 'Add to calendar',
+      calendarEvent: 'Wedding of',
     },
     countdown: {
       title: 'Counting down to our big day',
@@ -265,6 +273,7 @@ export const translations = {
       minutes: 'Minutes',
       seconds: 'Seconds',
       arrived: 'Today is our wedding day!',
+      past: 'Thank you for celebrating with us!',
     },
     rsvp: {
       eyebrow: 'RSVP & Wishes',
@@ -272,6 +281,9 @@ export const translations = {
       nameLabel: 'Your Name',
       namePlaceholder: 'Enter your name',
       attendanceLabel: 'Will you attend?',
+      requiredNote: 'Required',
+      nameRequired: 'Please enter your name.',
+      attendanceRequired: 'Please let us know whether you can attend.',
       attending: 'I will attend',
       notAttending: 'I cannot attend',
       partySizeLabel: 'Number of guests attending',
@@ -309,6 +321,7 @@ export const translations = {
       showQr: 'Show QR code',
       hideQr: 'Hide QR code',
       downloadQr: 'Download QR',
+      saveHint: 'Press and hold the QR code to save it',
       groomNote: 'Scan to send a gift to',
       brideNote: 'Scan to send a gift to',
     },
@@ -325,6 +338,7 @@ export const translations = {
       success: 'Your wish has been sent.',
       error: 'We could not send your wish. Please try again.',
       recent: 'Recent Wishes',
+      empty: 'No wishes yet. Be the first to send one!',
       showMore: 'Show more wishes',
       showLess: 'Show less',
       pagination: 'Wishes pages',
