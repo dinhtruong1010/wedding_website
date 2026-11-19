@@ -4,10 +4,10 @@
   "weddingDate": "2026-12-12",
   "weddingTime": "16:30",
   "locationName": "Aquaria Palace",
-  "locationAddress": "28 Lê Đức Thọ, Mỹ Đình 2, Từ Liêm, Hà Nội, Việt Nam",
+  "locationAddress": "28 Lê Đức Thọ, Mỹ Đình 2, Từ Liêm, Hà Nội",
   "googleMapsUrl": "https://maps.app.goo.gl/wgKv7AwRAo18ZoT7A",
-  "groomGiftQrCode": "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Groom%20Bank%20Info%20or%20payment%20link",
-  "brideGiftQrCode": "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Bride%20Bank%20Info%20or%20payment%20link",
+  "groomGiftQrCode": "/data/qr_code/groom_qr.jpg",
+  "brideGiftQrCode": "/data/qr_code/bride_qr.jpg",
   "heroImages": {
     "mobile": { "fallback": "/data/hero-mobile.jpg" },
     "tablet": { "fallback": "/data/hero-tablet.jpg" },

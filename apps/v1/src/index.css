@@ -74,7 +74,7 @@
   justify-content: center;
   gap: 0.5rem;
   border-radius: 9999px;
-  background: linear-gradient(135deg, #e88aa5 0%, #c95d80 100%);
+  background: linear-gradient(135deg, #b84d70 0%, #963a5a 100%);
   color: #fff;
   font-family: var(--font-label);
   font-weight: 800;
@@ -97,6 +97,7 @@
 
 .btn-outline-cute {
   display: inline-flex;
+  min-height: 2.75rem; /* 44px touch target */
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
@@ -170,7 +171,7 @@
   transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
 }
 .cute-input::placeholder {
-  color: #b9a3a5;
+  color: #8a7276;
 }
 .cute-input:focus {
   border-color: #e88aa5;
@@ -214,9 +215,37 @@
 }
 .choice-pill[data-selected="true"] {
   border-color: transparent;
-  background: linear-gradient(135deg, #e88aa5 0%, #c95d80 100%);
+  background: linear-gradient(135deg, #b84d70 0%, #963a5a 100%);
   color: #fff;
   box-shadow: 0 10px 20px -12px rgba(184, 77, 112, 0.8);
+}
+/* Spam trap: off-screen rather than display:none, which some bots skip. */
+.honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.required-mark {
+  margin-left: 0.25rem;
+  color: #c2410c;
+  font-weight: 800;
+}
+.field-error {
+  margin-top: 0.5rem;
+  color: #b42318;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.cute-input[aria-invalid="true"] {
+  border-color: #d92d20;
+  background: #fff7f6;
+}
+[data-invalid="true"] .choice-pill {
+  border-color: #d92d20;
+  background: #fff7f6;
 }
 .choice-pill:has(input:focus-visible) {
   outline: 2px solid #e88aa5;
@@ -294,10 +323,28 @@
   inset: 0;
   z-index: 90;
   display: flex;
-  align-items: center;
+  /* Card centres itself with margin:auto, and the cover scrolls when the screen is
+     too short (iPhone SE, landscape, in-app browsers with toolbars) so the
+     "Open" button can never end up out of reach. */
+  align-items: flex-start;
   justify-content: center;
-  overflow: hidden;
-  padding: 1.5rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: max(4.5rem, env(safe-area-inset-top)) 1.5rem max(1.5rem, env(safe-area-inset-bottom));
+}
+.invite-cover > .invite-card {
+  margin-block: auto;
+}
+@media (max-height: 640px) {
+  .invite-card {
+    padding: 2rem 1.5rem 1.5rem;
+  }
+  .invite-card .invite-names {
+    margin-top: 0.75rem;
+    font-size: 2.6rem;
+  }
 }
 .invite-card {
   position: relative;
@@ -309,6 +356,13 @@
   text-align: center;
   box-shadow: 0 30px 60px -30px rgba(184, 77, 112, 0.45);
   backdrop-filter: blur(10px);
+}
+/* Blurring over the animated hearts every frame is costly on phones: use a solid card. */
+@media (max-width: 640px) {
+  .invite-card {
+    background: rgba(255, 255, 255, 0.93);
+    backdrop-filter: none;
+  }
 }
 .invite-card::before {
   position: absolute;
@@ -521,7 +575,7 @@
   padding: 0.25rem 0.75rem;
   color: var(--color-primary);
   font-family: var(--font-label);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -604,6 +658,19 @@
   transform: translateX(-50%) rotate(-3deg);
 }
 
+.gallery-sway {
+  animation: gallery-sway 5s ease-in-out infinite;
+  animation-play-state: paused;
+}
+.gallery-section[data-visible="true"] .gallery-sway {
+  animation-play-state: running;
+}
+@keyframes gallery-sway {
+  0%, 50%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(var(--sway)); }
+  75% { transform: rotate(calc(var(--sway) * -1)); }
+}
+
 .gallery-lightbox-close,
 .gallery-lightbox-arrow {
   position: absolute;
@@ -623,9 +690,12 @@
   background: rgba(232, 138, 165, 0.9);
   transform: scale(1.06);
 }
+.gallery-lightbox-counter {
+  top: calc(env(safe-area-inset-top) + 1.25rem);
+}
 .gallery-lightbox-close {
-  top: 1rem;
-  right: 1rem;
+  top: calc(env(safe-area-inset-top) + 1rem);
+  right: calc(env(safe-area-inset-right) + 1rem);
   width: 2.75rem;
   height: 2.75rem;
 }
@@ -663,8 +733,8 @@
 }
 .page-btn {
   display: inline-flex;
-  min-width: 2.5rem;
-  height: 2.5rem;
+  min-width: 2.75rem;
+  height: 2.75rem;
   align-items: center;
   justify-content: center;
   border: 1.5px solid #f0dcd6;
@@ -684,7 +754,7 @@
 }
 .page-btn[data-active="true"] {
   border-color: transparent;
-  background: linear-gradient(135deg, #e88aa5 0%, #c95d80 100%);
+  background: linear-gradient(135deg, #b84d70 0%, #963a5a 100%);
   color: #fff;
   box-shadow: 0 8px 18px -10px rgba(184, 77, 112, 0.8);
 }

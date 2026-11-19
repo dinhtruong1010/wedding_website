@@ -59,6 +59,8 @@ export const CursorEffects = () => {
     };
 
     const handleDown = (event: PointerEvent) => {
+      // On phones every scroll starts with a touch: only celebrate real mouse clicks.
+      if (event.pointerType !== 'mouse') return;
       const { clientX: x, clientY: y } = event;
       spawn('cursor-ripple', x, y, '', {});
       const count = 8;

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AnimatePresence, MotionConfig, motion, useScroll, useSpring, type Variants } from 'motion/react';
+import { AnimatePresence, MotionConfig, motion, useInView, useScroll, useSpring, type Variants } from 'motion/react';
 import {
   ArrowUp,
   Calendar,
@@ -22,7 +22,7 @@ import {
   X,
 } from 'lucide-react';
 import { weddingConfig, type ResponsiveImageSource, type WeddingConfig } from './config';
-import { ResponsiveImage, ResponsivePicture, ResponsiveGalleryImage } from './components/ResponsiveImage';
+import { ResponsiveImage, ResponsivePicture, ResponsiveGalleryImage, optimizedSrc } from './components/ResponsiveImage';
 import { CursorEffects } from './components/CursorEffects';
 import { apiUrl, siteId, siteStorageKey } from './site';
 import { Language, languageLabels, localeByLanguage, translations } from './i18n';
@@ -67,18 +67,60 @@ const weddingStart = (() => {
   return Number.isNaN(date.getTime()) ? null : date;
 })();
 
-const googleCalendarUrl = () => {
+/** Calendar date (YYYY-MM-DD) in Hà Nội time, whatever the guest's own timezone is. */
+const hanoiDate = (time: number) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(time);
+
+/** 'upcoming' until the ceremony starts, 'today' for the rest of that day, then 'past'. */
+const weddingPhase = (now: number): 'upcoming' | 'today' | 'past' => {
+  if (!weddingStart || now < weddingStart.getTime()) return 'upcoming';
+  return hanoiDate(now) === hanoiDate(weddingStart.getTime()) ? 'today' : 'past';
+};
+
+const isAppleDevice = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+
+/**
+ * "Add to calendar": Apple devices get an .ics file (opens the Calendar app, no Google
+ * login needed); everyone else gets Google Calendar's prefilled event page.
+ */
+const calendarUrl = (language: Language) => {
   if (!weddingStart) return null;
   const stamp = (date: Date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const end = new Date(weddingStart.getTime() + 4 * 60 * 60 * 1000);
+  const title = `${translations[language].details.calendarEvent} ${weddingConfig.groomName} & ${weddingConfig.brideName}`;
+  const location = `${weddingConfig.locationName}, ${weddingConfig.locationAddress}`;
+
+  if (isAppleDevice) {
+    const params = new URLSearchParams({ title, start: stamp(weddingStart), end: stamp(end), location, details: weddingConfig.googleMapsUrl });
+    return `/api/calendar?${params.toString()}`;
+  }
   const params = new URLSearchParams({
     action: 'TEMPLATE',
-    text: `Đám cưới ${weddingConfig.groomName} & ${weddingConfig.brideName}`,
+    text: title,
     dates: `${stamp(weddingStart)}/${stamp(end)}`,
-    location: `${weddingConfig.locationName}, ${weddingConfig.locationAddress}`,
+    location,
     details: weddingConfig.googleMapsUrl,
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
+};
+
+/**
+ * Locks page scrolling while an overlay is open. `overflow: hidden` on <body> alone is
+ * ignored by touch scrolling on iOS < 16, so the body is pinned with position: fixed and
+ * the scroll position restored afterwards. Returns the unlock function.
+ */
+const lockPageScroll = () => {
+  const { body } = document;
+  const scrollY = window.scrollY;
+  const previous = { position: body.style.position, top: body.style.top, width: body.style.width, overflow: body.style.overflow };
+  body.style.position = 'fixed';
+  body.style.top = `-${scrollY}px`;
+  body.style.width = '100%';
+  body.style.overflow = 'hidden';
+  return () => {
+    Object.assign(body.style, previous);
+    window.scrollTo({ top: scrollY, behavior: 'instant' as ScrollBehavior });
+  };
 };
 
 /** crypto.randomUUID only exists in secure contexts (https/localhost), not on LAN http. */
@@ -200,7 +242,7 @@ const LanguageSwitcher = ({ language, onLanguageChange, tone = 'glass' }: Navbar
             key={item}
             type="button"
             onClick={() => onLanguageChange(item)}
-            className={`h-8 min-w-10 whitespace-nowrap rounded-full px-3 font-label text-xs font-extrabold transition-all ${
+            className={`h-10 min-w-11 whitespace-nowrap rounded-full px-3 font-label text-xs font-extrabold transition-all ${
               isActive ? 'bg-white text-primary shadow-sm' : 'text-current hover:bg-white/30'
             }`}
             aria-pressed={isActive}
@@ -278,7 +320,7 @@ const Navbar = ({ language, onLanguageChange }: NavbarProps) => {
     <nav
       ref={navRef}
       className={`fixed top-0 z-50 w-full transition-all duration-300 ${
-        isSolid ? 'bg-surface/85 py-3 shadow-[0_8px_30px_-18px_rgba(184,77,112,0.45)] backdrop-blur-md' : 'bg-transparent py-5 md:py-6'
+        isSolid ? 'bg-surface/95 py-3 shadow-[0_8px_30px_-18px_rgba(184,77,112,0.45)] md:bg-surface/85 md:backdrop-blur-md' : 'bg-transparent py-5 md:py-6'
       }`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-end gap-4 px-5 md:px-6 xl:justify-center">
@@ -325,11 +367,11 @@ const Navbar = ({ language, onLanguageChange }: NavbarProps) => {
         {/* Mobile Toggle */}
         <button
           type="button"
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors xl:hidden ${
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors xl:hidden ${
             isSolid ? 'bg-primary-container/60 text-primary' : 'bg-white/20 text-white backdrop-blur-sm'
           }`}
           onClick={() => setIsMobileMenuOpen((open) => !open)}
-          aria-label="Menu"
+          aria-label={t.nav.menu}
           aria-expanded={isMobileMenuOpen}
           aria-controls="mobile-menu"
         >
@@ -346,7 +388,7 @@ const Navbar = ({ language, onLanguageChange }: NavbarProps) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.98 }}
             transition={{ duration: 0.25, ease: EASE }}
-            className="absolute inset-x-4 top-full mt-2 flex flex-col items-center gap-2 rounded-[1.75rem] border border-primary-soft/20 bg-white/95 px-6 py-6 shadow-xl backdrop-blur-md xl:hidden"
+            className="absolute inset-x-4 top-full mt-2 flex max-h-[calc(100dvh-5.5rem)] flex-col items-center gap-2 overflow-y-auto overscroll-contain rounded-[1.75rem] border border-primary-soft/20 bg-white px-6 py-6 shadow-xl xl:hidden"
           >
             {navLinks.map((link, index) => (
               <motion.a
@@ -414,8 +456,8 @@ const InvitationCover = ({ language, onLanguageChange, ready, onOpen }: CoverPro
         >
           <MailOpen size={24} />
         </motion.div>
-        <p className="mt-6 font-label text-[0.7rem] font-bold uppercase leading-relaxed tracking-[0.22em] text-on-surface-variant">{t.invite}</p>
-        <p className="mt-4 font-names text-[3.4rem] font-normal leading-[1.15] text-primary sm:text-[4rem]">
+        <p className="mt-6 font-label text-xs font-bold uppercase leading-relaxed tracking-[0.2em] text-on-surface-variant">{t.invite}</p>
+        <p className="invite-names mt-4 font-names text-[3.4rem] font-normal leading-[1.15] text-primary sm:text-[4rem]">
           {weddingConfig.groomName}
           <span className="my-1 block text-[2.6rem] leading-none text-primary-soft">&</span>
           {weddingConfig.brideName}
@@ -515,14 +557,7 @@ const Hero = ({ language, heroImages, isOpened }: HeroProps) => {
         animate={isOpened ? 'show' : 'hidden'}
         className="relative z-10 max-w-4xl px-6 text-white"
       >
-        <motion.p
-          variants={heroItem}
-          className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-4 py-1.5 font-label text-[0.7rem] font-bold uppercase tracking-[0.3em] backdrop-blur-sm"
-        >
-          <Heart size={11} fill="currentColor" aria-hidden="true" />
-          {t.hero.saveTheDate}
-        </motion.p>
-        <motion.h1 variants={heroItem} className="hero-names mt-6 font-names text-[3.8rem] font-normal leading-[1.1] sm:text-7xl lg:text-8xl">
+        <motion.h1 variants={heroItem} className="hero-names font-names text-[clamp(2.75rem,15vw,3.8rem)] font-normal leading-[1.1] sm:text-7xl lg:text-8xl">
           <span className="whitespace-nowrap">{weddingConfig.groomName}</span>
           <span className="mx-3 my-1 block text-[3rem] leading-none text-white [text-shadow:0_0_18px_rgba(232,138,165,0.95)] sm:text-6xl xl:inline">&</span>
           <span className="whitespace-nowrap">{weddingConfig.brideName}</span>
@@ -600,18 +635,22 @@ const Countdown = ({ language }: LocalizedProps) => {
   const t = translations[language].countdown;
   const [now, setNow] = useState(() => Date.now());
 
+  const phase = weddingPhase(now);
+
   useEffect(() => {
+    // Nothing left to tick once the wedding day is over.
+    if (phase === 'past') return;
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [phase]);
 
   if (!weddingStart) return null;
   const diff = Math.max(0, weddingStart.getTime() - now);
 
-  if (diff === 0) {
+  if (phase !== 'upcoming') {
     return (
-      <p className="mb-14 text-center font-display text-4xl text-primary">
-        {t.arrived} <Heart className="inline animate-heartbeat" fill="currentColor" size={28} aria-hidden="true" />
+      <p className="mb-14 text-balance text-center font-display text-4xl text-primary">
+        {phase === 'today' ? t.arrived : t.past} <Heart className="inline animate-heartbeat" fill="currentColor" size={28} aria-hidden="true" />
       </p>
     );
   }
@@ -648,7 +687,7 @@ const Countdown = ({ language }: LocalizedProps) => {
                 {String(unit.value).padStart(2, '0')}
               </motion.span>
             </div>
-            <span className="mt-1 font-label text-[0.65rem] font-extrabold uppercase tracking-[0.18em] text-on-surface-variant">{unit.label}</span>
+            <span className="mt-1 font-label text-xs font-extrabold uppercase tracking-[0.14em] text-on-surface-variant">{unit.label}</span>
           </div>
         ))}
       </div>
@@ -658,14 +697,14 @@ const Countdown = ({ language }: LocalizedProps) => {
 
 const WeddingDetails = ({ language }: LocalizedProps) => {
   const t = translations[language];
-  const calendarUrl = googleCalendarUrl();
+  const calendarHref = calendarUrl(language);
   const details = [
     {
       icon: <Calendar size={26} />,
       title: t.details.dateTitle,
       content: formatWeddingDate(language, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }),
       sub: t.details.dateSub,
-      link: calendarUrl ? { href: calendarUrl, label: t.details.addToCalendar, icon: <CalendarPlus size={14} aria-hidden="true" /> } : null,
+      link: calendarHref ? { href: calendarHref, label: t.details.addToCalendar, icon: <CalendarPlus size={14} aria-hidden="true" /> } : null,
     },
     {
       icon: <Clock size={26} />,
@@ -705,7 +744,7 @@ const WeddingDetails = ({ language }: LocalizedProps) => {
               </div>
               <h3 className="mb-3 font-headline text-2xl">{item.title}</h3>
               <p className="mb-1 text-lg font-semibold text-on-surface first-letter:uppercase">{item.content}</p>
-              <p className="mt-3 font-label text-[0.7rem] font-bold uppercase leading-relaxed tracking-[0.16em] text-on-surface-variant">{item.sub}</p>
+              <p className="mt-3 text-balance font-label text-xs font-bold uppercase leading-relaxed tracking-[0.14em] text-on-surface-variant">{item.sub}</p>
               {item.link ? (
                 <a href={item.link.href} target="_blank" rel="noreferrer" className="btn-outline-cute mt-6 px-5 py-2 text-xs uppercase">
                   {item.link.icon}
@@ -750,10 +789,14 @@ interface SavedRsvp {
   partySize: number;
 }
 
+/** Fallback when storage is blocked (private mode, some in-app browsers): one id per visit. */
+let memorySubmissionId: string | null = null;
+
 const getRsvpSubmissionId = () => {
-  const existing = readStorage(RSVP_SUBMISSION_ID_KEY);
+  const existing = readStorage(RSVP_SUBMISSION_ID_KEY) ?? memorySubmissionId;
   if (existing) return existing;
   const submissionId = createUuid();
+  memorySubmissionId = submissionId;
   writeStorage(RSVP_SUBMISSION_ID_KEY, submissionId);
   return submissionId;
 };
@@ -828,8 +871,18 @@ const RsvpAndWishes = ({ language, wishes, onWishSubmitted }: RsvpWishesProps) =
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<'rsvp' | 'wish' | null>(null);
+  // Validation messages appear only after a submit attempt, then update live.
+  const [showErrors, setShowErrors] = useState(false);
+  // Anti-spam signals (see api/wishes.ts): a hidden field only bots fill, and time on form.
+  const [website, setWebsite] = useState('');
+  const formShownAt = useRef(Date.now());
+  const botCheck = () => ({ website, elapsedMs: Date.now() - formShownAt.current });
+  const nameMissing = !name.trim();
+  const attendanceMissing = attending === null;
   const [page, setPage] = useState(1);
-  const displayedWishes: readonly Wish[] = wishes ?? tg.wishes;
+  // undefined = still loading. Sample wishes are never shown as if guests had written them.
+  const isLoadingWishes = wishes === undefined;
+  const displayedWishes: readonly Wish[] = wishes ?? [];
   const pageCount = Math.max(1, Math.ceil(displayedWishes.length / WISHES_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const pageStart = (currentPage - 1) * WISHES_PAGE_SIZE;
@@ -844,7 +897,15 @@ const RsvpAndWishes = ({ language, wishes, onWishSubmitted }: RsvpWishesProps) =
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isSubmitting || attending === null) return;
+    if (isSubmitting) return;
+    if (nameMissing || attending === null) {
+      setShowErrors(true);
+      // Move focus to the first field that still needs an answer.
+      const firstInvalid = nameMissing ? document.getElementById('rsvp-name') : document.querySelector<HTMLInputElement>('input[name="attendance"]');
+      firstInvalid?.focus();
+      firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
 
     const guestName = name.trim();
     const wishMessage = message.trim();
@@ -855,8 +916,9 @@ const RsvpAndWishes = ({ language, wishes, onWishSubmitted }: RsvpWishesProps) =
       const payload = await postJson(apiUrl('/api/rsvps'), {
         guestName,
         attending,
-        partySize,
+        partySize: attending ? partySize : 0,
         submissionId: getRsvpSubmissionId(),
+        ...botCheck(),
       });
       if (!payload?.rsvp) throw new Error('Unable to save RSVP');
     } catch {
@@ -865,13 +927,13 @@ const RsvpAndWishes = ({ language, wishes, onWishSubmitted }: RsvpWishesProps) =
       return;
     }
 
-    const nextSaved = { name: guestName, attending, partySize };
+    const nextSaved = { name: guestName, attending, partySize: attending ? partySize : 0 };
     writeStorage(RSVP_RESPONSE_KEY, JSON.stringify(nextSaved));
     setSaved(nextSaved);
 
     if (wishMessage) {
       try {
-        const payload = await postJson(apiUrl('/api/wishes'), { name: guestName, message: wishMessage });
+        const payload = await postJson(apiUrl('/api/wishes'), { name: guestName, message: wishMessage, ...botCheck() });
         if (!payload?.wish) throw new Error('Unable to send wish');
         onWishSubmitted(payload.wish);
         setPage(1);
@@ -930,6 +992,7 @@ const RsvpAndWishes = ({ language, wishes, onWishSubmitted }: RsvpWishesProps) =
               <motion.form
                 key="form"
                 onSubmit={handleSubmit}
+                noValidate
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
@@ -937,9 +1000,17 @@ const RsvpAndWishes = ({ language, wishes, onWishSubmitted }: RsvpWishesProps) =
                 transition={{ duration: 0.6, ease: EASE }}
                 className="cute-card space-y-7 p-7 text-left sm:p-10"
               >
+                <p className="font-label text-xs text-on-surface-variant">
+                  <span className="required-mark" aria-hidden="true">*</span> {t.requiredNote}
+                </p>
+                <div className="honeypot" aria-hidden="true">
+                  <label htmlFor="rsvp-website">Website</label>
+                  <input id="rsvp-website" type="text" tabIndex={-1} autoComplete="off" value={website} onChange={(event) => setWebsite(event.target.value)} />
+                </div>
                 <div>
                   <label htmlFor="rsvp-name" className="cute-label">
                     {t.nameLabel}
+                    <span className="required-mark" aria-hidden="true">*</span>
                   </label>
                   <input
                     id="rsvp-name"
@@ -950,13 +1021,28 @@ const RsvpAndWishes = ({ language, wishes, onWishSubmitted }: RsvpWishesProps) =
                     required
                     autoComplete="name"
                     placeholder={t.namePlaceholder}
+                    aria-required="true"
+                    aria-invalid={showErrors && nameMissing}
+                    aria-describedby={showErrors && nameMissing ? 'rsvp-name-error' : undefined}
                     className="cute-input"
                   />
+                  {showErrors && nameMissing ? (
+                    <p id="rsvp-name-error" className="field-error" role="alert">
+                      {t.nameRequired}
+                    </p>
+                  ) : null}
                 </div>
 
-                <fieldset>
-                  <legend className="cute-label">{t.attendanceLabel}</legend>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                <fieldset
+                  aria-required="true"
+                  aria-invalid={showErrors && attendanceMissing}
+                  aria-describedby={showErrors && attendanceMissing ? 'rsvp-attendance-error' : undefined}
+                >
+                  <legend className="cute-label">
+                    {t.attendanceLabel}
+                    <span className="required-mark" aria-hidden="true">*</span>
+                  </legend>
+                  <div className="grid gap-3 sm:grid-cols-2" data-invalid={showErrors && attendanceMissing}>
                     {[
                       { value: true, label: t.attending, icon: <Heart size={16} fill="currentColor" aria-hidden="true" /> },
                       { value: false, label: t.notAttending, icon: <HeartCrack size={16} aria-hidden="true" /> },
@@ -979,6 +1065,11 @@ const RsvpAndWishes = ({ language, wishes, onWishSubmitted }: RsvpWishesProps) =
                       );
                     })}
                   </div>
+                  {showErrors && attendanceMissing ? (
+                    <p id="rsvp-attendance-error" className="field-error" role="alert">
+                      {t.attendanceRequired}
+                    </p>
+                  ) : null}
                 </fieldset>
 
                 <AnimatePresence initial={false}>
@@ -1027,12 +1118,12 @@ const RsvpAndWishes = ({ language, wishes, onWishSubmitted }: RsvpWishesProps) =
                     rows={4}
                     className="cute-input resize-none"
                   />
-                  <p className="mt-1.5 text-right font-label text-xs text-on-surface-variant/80">
+                  <p className="mt-1.5 text-right font-label text-xs text-on-surface-variant">
                     {message.length}/{WISH_MAX_LENGTH}
                   </p>
                 </div>
 
-                <button type="submit" disabled={isSubmitting || attending === null || !name.trim()} className="btn-cute w-full py-4 text-sm uppercase">
+                <button type="submit" disabled={isSubmitting} className="btn-cute w-full py-4 text-sm uppercase">
                   {isSubmitting ? (
                     <>
                       <LoadingDots />
@@ -1070,6 +1161,15 @@ const RsvpAndWishes = ({ language, wishes, onWishSubmitted }: RsvpWishesProps) =
             {tg.recent}
             <Heart size={18} className="text-primary-soft" fill="currentColor" aria-hidden="true" />
           </h3>
+          {isLoadingWishes ? (
+            <div className="wish-wall wish-wall-narrow" aria-busy="true">
+              {[0, 1, 2].map((index) => (
+                <div key={index} className="wish-card img-skeleton h-28" aria-hidden="true" />
+              ))}
+            </div>
+          ) : displayedWishes.length === 0 ? (
+            <p className="mx-auto max-w-md text-center font-headline text-lg italic text-on-surface-variant">{tg.empty}</p>
+          ) : null}
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={currentPage}
@@ -1154,6 +1254,8 @@ const PhotoGallery = ({ language, images }: LocalizedProps & { images: string[] 
   const [direction, setDirection] = useState(0);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const isOpen = selectedImage !== null;
+  const sectionRef = useRef<HTMLElement>(null);
+  const isVisible = useInView(sectionRef, { margin: '200px 0px' });
 
   const step = useCallback(
     (delta: number) => {
@@ -1177,21 +1279,23 @@ const PhotoGallery = ({ language, images }: LocalizedProps & { images: string[] 
       if (event.key === 'ArrowRight') step(1);
     };
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    // Remember the thumbnail that opened the lightbox so focus can go back to it.
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const unlockScroll = lockPageScroll();
     window.addEventListener('keydown', handleKeyDown);
     closeButtonRef.current?.focus();
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlockScroll();
       window.removeEventListener('keydown', handleKeyDown);
+      opener?.focus({ preventScroll: true });
     };
   }, [isOpen, step]);
 
   if (count === 0) return null;
 
   return (
-    <section id="gallery" className="gallery-section overflow-hidden px-6 py-24 md:py-28">
+    <section id="gallery" ref={sectionRef} data-visible={isVisible} className="gallery-section overflow-hidden px-6 py-24 md:py-28">
       <div className="mx-auto max-w-7xl">
         <SectionHeading eyebrow={t.gallery.eyebrow} title={t.gallery.title} />
 
@@ -1237,17 +1341,17 @@ const PhotoGallery = ({ language, images }: LocalizedProps & { images: string[] 
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedImage(null)}
-            className="fixed inset-0 z-[70] flex items-center justify-center p-4 backdrop-blur-md"
+            className="fixed inset-0 z-[70] flex items-center justify-center p-4 md:backdrop-blur-md"
             style={{ background: 'rgba(60, 30, 40, 0.88)' }}
           >
-            <p className="absolute left-1/2 top-5 z-[2] -translate-x-1/2 rounded-full bg-white/15 px-4 py-1.5 font-label text-xs font-bold tracking-[0.2em] text-white">
+            <p className="gallery-lightbox-counter absolute left-1/2 z-[2] -translate-x-1/2 rounded-full bg-white/15 px-4 py-1.5 font-label text-xs font-bold tracking-[0.2em] text-white">
               {selectedImage + 1} / {count}
             </p>
             <div className="relative flex h-full w-full max-w-6xl items-center justify-center overflow-hidden">
               <AnimatePresence initial={false} custom={direction} mode="popLayout">
                 <motion.img
                   key={selectedImage}
-                  src={galleryImages[selectedImage]}
+                  src={optimizedSrc(galleryImages[selectedImage], 1600)}
                   alt={`${t.gallery.altPrefix} ${selectedImage + 1}`}
                   custom={direction}
                   variants={slideVariants}
@@ -1265,7 +1369,7 @@ const PhotoGallery = ({ language, images }: LocalizedProps & { images: string[] 
                   onClick={(event) => event.stopPropagation()}
                   draggable={false}
                   referrerPolicy="no-referrer"
-                  className="max-h-[80svh] w-auto max-w-full cursor-grab touch-pan-y select-none rounded-2xl border-[6px] border-white object-contain shadow-2xl active:cursor-grabbing"
+                  className="max-h-[80svh] w-auto max-w-full cursor-grab touch-none select-none rounded-2xl border-[6px] border-white object-contain shadow-2xl active:cursor-grabbing"
                 />
               </AnimatePresence>
             </div>
@@ -1344,11 +1448,17 @@ const GalleryPhoto = ({ src, index, alt, onSelect, featured = false, openLabel }
       aria-label={`${openLabel} ${alt}`}
       className={`gallery-polaroid relative block w-full cursor-zoom-in text-left ${featured ? 'gallery-polaroid-featured' : 'gallery-polaroid-hanging'}`}
     >
-      <motion.span
-        className="group relative block rounded-lg bg-white p-2 pb-10 shadow-[0_18px_36px_-20px_rgba(138,106,90,0.6)] transition-shadow hover:shadow-[0_26px_44px_-20px_rgba(184,77,112,0.55)]"
-        style={{ transformOrigin: featured ? '50% 0%' : '50% -1.25rem' }}
-        animate={{ rotate: [0, featured ? 0.8 : 1.6, 0, featured ? -0.8 : -1.6, 0] }}
-        transition={{ duration: 5 + index * 0.35, repeat: Infinity, ease: 'easeInOut', delay: index * 0.3 }}
+      {/* Sway is a CSS animation (compositor only, paused off-screen by .gallery-section). */}
+      <span
+        className="gallery-sway group relative block rounded-lg bg-white p-2 pb-10 shadow-[0_18px_36px_-20px_rgba(138,106,90,0.6)] transition-shadow hover:shadow-[0_26px_44px_-20px_rgba(184,77,112,0.55)]"
+        style={
+          {
+            transformOrigin: featured ? '50% 0%' : '50% -1.25rem',
+            '--sway': featured ? '0.8deg' : '1.6deg',
+            animationDuration: `${5 + index * 0.35}s`,
+            animationDelay: `${index * 0.3}s`,
+          } as React.CSSProperties
+        }
       >
         {featured ? <span aria-hidden="true" className="gallery-tape" /> : <span aria-hidden="true" className="gallery-photo-pin" />}
         <ResponsiveGalleryImage
@@ -1360,12 +1470,23 @@ const GalleryPhoto = ({ src, index, alt, onSelect, featured = false, openLabel }
         <span aria-hidden="true" className="absolute bottom-2.5 left-0 right-0 flex items-center justify-center gap-1 font-display text-lg text-primary/80">
           <Heart size={12} fill="currentColor" />
         </span>
-      </motion.span>
+      </span>
     </motion.button>
   );
 };
 
 // --- Gifts ---
+
+/**
+ * In-app browsers (Zalo, Messenger, Facebook, Instagram...) and iOS ignore <a download>
+ * on blob URLs without any error, so there we ask guests to long-press the QR instead.
+ */
+const cannotDownloadFiles = (() => {
+  const ua = navigator.userAgent;
+  const inAppBrowser = /FBAN|FBAV|FB_IAB|Messenger|Instagram|Zalo|Line\/|MicroMessenger|TikTok|; wv\)/i.test(ua);
+  const iOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  return inAppBrowser || iOS;
+})();
 
 const downloadQr = async (url: string, filename: string) => {
   try {
@@ -1382,7 +1503,8 @@ const downloadQr = async (url: string, filename: string) => {
     // Revoking synchronously can cancel the download in some browsers (Safari/Firefox).
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
   } catch {
-    window.open(url, '_blank', 'noopener,noreferrer');
+    // Same-tab navigation: a window.open after an await is blocked as a popup.
+    window.location.assign(url);
   }
 };
 
@@ -1394,10 +1516,11 @@ interface GiftCardProps {
   name: string;
   filename: string;
   downloadLabel: string;
+  saveHint: string;
   delay: number;
 }
 
-const GiftCard = ({ title, alt, qr, note, name, filename, downloadLabel, delay }: GiftCardProps) => (
+const GiftCard = ({ title, alt, qr, note, name, filename, downloadLabel, saveHint, delay }: GiftCardProps) => (
   <motion.div
     initial={{ opacity: 0, y: 20, scale: 0.96 }}
     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -1408,19 +1531,24 @@ const GiftCard = ({ title, alt, qr, note, name, filename, downloadLabel, delay }
       {title}
     </span>
     <div className="mx-auto w-fit rounded-[1.5rem] border-2 border-dashed border-primary-soft/40 bg-white p-3">
-      <ResponsiveImage src={qr} alt={alt} className="h-40 w-40 rounded-xl object-contain md:h-44 md:w-44" objectFit="contain" />
+      {/* Original file, not resized/re-encoded: guests long-press to save it, and banking apps must read it. */}
+      <ResponsiveImage src={qr} alt={alt} optimize={false} className="h-auto w-52 rounded-xl md:w-56" objectFit="contain" />
     </div>
     <p className="mt-5 text-sm text-on-surface-variant">
       {note} <strong className="font-names text-2xl font-normal text-primary">{name}</strong>
     </p>
-    <button type="button" onClick={() => downloadQr(qr, filename)} className="btn-outline-cute mt-5 px-5 py-2 text-xs uppercase">
-      <Download size={14} aria-hidden="true" />
-      {downloadLabel}
-    </button>
+    {cannotDownloadFiles ? (
+      <p className="mt-4 font-label text-sm font-semibold text-primary">{saveHint}</p>
+    ) : (
+      <button type="button" onClick={() => downloadQr(qr, filename)} className="btn-outline-cute mt-5 px-5 py-2 text-xs uppercase">
+        <Download size={14} aria-hidden="true" />
+        {downloadLabel}
+      </button>
+    )}
   </motion.div>
 );
 
-const Gifts = ({ language }: LocalizedProps) => {
+const Gifts = ({ language, groomQr, brideQr }: LocalizedProps & { groomQr: string; brideQr: string }) => {
   const t = translations[language];
   const [isQrVisible, setIsQrVisible] = useState(false);
 
@@ -1455,21 +1583,23 @@ const Gifts = ({ language }: LocalizedProps) => {
                 <GiftCard
                   title={t.gifts.groomTitle}
                   alt={t.gifts.groomAlt}
-                  qr={weddingConfig.groomGiftQrCode}
+                  qr={groomQr}
                   note={t.gifts.groomNote}
                   name={weddingConfig.groomName}
                   filename="qr-chu-re.jpg"
                   downloadLabel={t.gifts.downloadQr}
+                  saveHint={t.gifts.saveHint}
                   delay={0.1}
                 />
                 <GiftCard
                   title={t.gifts.brideTitle}
                   alt={t.gifts.brideAlt}
-                  qr={weddingConfig.brideGiftQrCode}
+                  qr={brideQr}
                   note={t.gifts.brideNote}
                   name={weddingConfig.brideName}
                   filename="qr-co-dau.jpg"
                   downloadLabel={t.gifts.downloadQr}
+                  saveHint={t.gifts.saveHint}
                   delay={0.2}
                 />
               </div>
@@ -1524,7 +1654,7 @@ const FloatingControls = ({ language, isMuted, isPlaying, onToggleAudio }: Float
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.8, duration: 0.5 }}
       className="fixed bottom-5 right-5 z-40 flex flex-col items-center gap-3 sm:bottom-8 sm:right-8"
-      style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
+      style={{ marginBottom: 'env(safe-area-inset-bottom)', marginRight: 'env(safe-area-inset-right)' }}
     >
       <AnimatePresence>
         {showTop ? (
@@ -1546,7 +1676,6 @@ const FloatingControls = ({ language, isMuted, isPlaying, onToggleAudio }: Float
         type="button"
         onClick={onToggleAudio}
         aria-label={isMuted ? t.audio.on : t.audio.off}
-        aria-pressed={!isMuted}
         className="btn-cute relative h-14 w-14 p-0"
       >
         {isPlaying ? <span className="absolute inset-0 animate-ping rounded-full bg-primary-soft/40" aria-hidden="true" /> : null}
@@ -1601,12 +1730,19 @@ export default function App() {
   const [wishes, setWishes] = useState<Wish[] | undefined>();
   const [heroReady, setHeroReady] = useState(false);
   const [isOpened, setIsOpened] = useState(false);
+  // Media the guest actually sees/hears. Frozen once the invitation is opened so a late
+  // API response can't reload the playing <audio> (which stops the music) or swap the hero.
+  const [mediaConfig, setMediaConfig] = useState(weddingConfig);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(() => readStorage('wedding-audio-muted') === 'true');
   const [language, setLanguage] = useState<Language>(() => {
     const savedLanguage = readStorage('wedding-language');
     return savedLanguage === 'en' || savedLanguage === 'vi' ? savedLanguage : 'vi';
   });
+
+  useEffect(() => {
+    if (!isOpened) setMediaConfig(activeConfig);
+  }, [activeConfig, isOpened]);
 
   useEffect(() => {
     writeStorage('wedding-language', language);
@@ -1626,7 +1762,7 @@ export default function App() {
     };
     const safetyTimer = window.setTimeout(markReady, MAX_LOADING_MS);
 
-    fetch(apiUrl('/api/wedding-content'), { cache: 'no-store' })
+    fetch(apiUrl('/api/wedding-content'))
       .then((response) => (response.ok ? response.json() : null))
       .then(async (payload) => {
         const nextConfig = payload?.config ? { ...weddingConfig, ...payload.config } : weddingConfig;
@@ -1661,12 +1797,14 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch(apiUrl('/api/wishes'), { cache: 'no-store' })
+    fetch(apiUrl('/api/wishes'))
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
-        if (!cancelled && Array.isArray(payload?.wishes)) setWishes(payload.wishes);
+        if (!cancelled) setWishes(Array.isArray(payload?.wishes) ? payload.wishes : []);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (!cancelled) setWishes([]);
+      });
 
     return () => {
       cancelled = true;
@@ -1700,11 +1838,16 @@ export default function App() {
   // Lock page scroll while the invitation cover is shown.
   useEffect(() => {
     if (isOpened) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
+    return lockPageScroll();
+  }, [isOpened]);
+
+  // While the cover dialog is shown, the page behind it must not be reachable with Tab
+  // or a screen reader (aria-modal alone isn't enough in most browsers).
+  useEffect(() => {
+    const behind = document.querySelectorAll<HTMLElement>('#root nav, #root main, #root footer');
+    behind.forEach((element) => {
+      element.inert = !isOpened;
+    });
   }, [isOpened]);
 
   useEffect(() => {
@@ -1764,16 +1907,16 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen">
-        <audio ref={audioRef} src={activeConfig.audioUrl} loop preload="none" />
+        <audio ref={audioRef} src={mediaConfig.audioUrl} loop preload="none" />
         <CursorEffects />
         <ScrollProgress />
         <Navbar language={language} onLanguageChange={setLanguage} />
         <main>
-          {heroReady ? <Hero language={language} heroImages={activeConfig.heroImages} isOpened={isOpened} /> : <HeroPlaceholder />}
+          {heroReady ? <Hero language={language} heroImages={mediaConfig.heroImages} isOpened={isOpened} /> : <HeroPlaceholder />}
           <OurStory language={language} storyImages={activeConfig.storyImages} />
           <WeddingDetails language={language} />
           <PhotoGallery language={language} images={activeConfig.galleryImages} />
-          <Gifts language={language} />
+          <Gifts language={language} groomQr={activeConfig.groomGiftQrCode} brideQr={activeConfig.brideGiftQrCode} />
           <RsvpAndWishes
             language={language}
             wishes={wishes}

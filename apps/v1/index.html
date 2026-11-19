@@ -1,23 +1,37 @@
 <!doctype html>
-<html lang="vi">
+<html lang="vi" translate="no">
   <head>
     <meta charset="UTF-8" />
+    <meta name="google" content="notranslate" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Đình Trường & Thanh Ngà · Thiệp cưới 12.12.2026</title>
     <meta name="description" content="Trân trọng kính mời bạn đến chung vui trong lễ cưới của Đình Trường & Thanh Ngà · 12.12.2026 · Aquaria Palace, Hà Nội." />
     <meta name="theme-color" content="#fbe4e9" />
+    <!-- Link previews (Zalo, Messenger, Facebook). Crawlers don't run JS, so these must be
+         absolute URLs. The /na page gets its own copy of this file at build time (vite.config.ts). -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Thiệp cưới Đình Trường & Thanh Ngà" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:url" content="__SITE_URL__/" />
     <meta property="og:title" content="Đình Trường & Thanh Ngà · Thiệp cưới" />
-    <meta property="og:description" content="Chúng mình sắp kết hôn và rất mong được cùng bạn chung vui · 12.12.2026" />
-    <meta property="og:image" content="/data/hero-desktop.jpg" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+    <meta property="og:description" content="Trân trọng kính mời bạn đến chung vui · 12.12.2026 · Aquaria Palace, Hà Nội" />
+    <meta property="og:image" content="__SITE_URL__/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Đình Trường & Thanh Ngà" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Fonts: loaded from <head> (not a CSS @import) so they don't block CSS parsing. All support Vietnamese. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="__BLOB_ORIGIN__" crossorigin />
+    <link rel="preload" href="/fonts/UTM-Edwardian.woff2" as="font" type="font/woff2" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&family=Nunito:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap&subset=vietnamese"
+      href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600&family=Nunito:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap"
     />
 
     <style>
@@ -61,6 +75,14 @@
         <div class="boot-text">Đang mở thiệp…</div>
       </div>
     </div>
+    <script>
+      try {
+        if (localStorage.getItem('wedding-language') === 'en') {
+          document.documentElement.lang = 'en';
+          document.querySelector('.boot-text').textContent = 'Opening invitation…';
+        }
+      } catch (e) {}
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

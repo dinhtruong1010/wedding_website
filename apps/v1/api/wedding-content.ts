@@ -36,6 +36,8 @@ type WeddingMediaConfig = {
   };
   storyImage?: string;
   storyImages?: string[];
+  groomGiftQrCode?: string;
+  brideGiftQrCode?: string;
 };
 type ResponsiveImageSource = { avif?: string; webp?: string; fallback: string };
 
@@ -105,6 +107,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .filter((blob) => isImage(blob.pathname) && blob.pathname.startsWith(storyPrefix))
           .sort((left, right) => left.pathname.localeCompare(right.pathname));
         const story = storyFiles[0];
+        // Gift QR codes: wedding/qr/groom_qr.jpg and wedding/qr/bride_qr.jpg (any image extension).
+        const qrPrefix = process.env.BLOB_QR_PREFIX ?? "wedding/qr/";
+        const qrFiles = blobs.filter((blob) => isImage(blob.pathname) && blob.pathname.startsWith(qrPrefix));
+        const qrNamed = (stem: string) => qrFiles.find((blob) => blob.pathname.toLowerCase().split("/").pop()?.replace(/[.][^.]+$/, "") === stem);
+        const groomQr = qrNamed("groom_qr");
+        const brideQr = qrNamed("bride_qr");
+        if (groomQr) config.groomGiftQrCode = groomQr.url;
+        if (brideQr) config.brideGiftQrCode = brideQr.url;
 
         if (galleryImages.length > 0) config.galleryImages = galleryImages.map((blob) => blob.url);
         if (audio) config.audioUrl = audio.url;
@@ -137,14 +147,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         galleryCount = galleryImages.length;
         blobLoaded = galleryImages.length > 0 || Boolean(audio) || heroFiles.length > 0 || Boolean(story);
-      } catch {
+      } catch (error) {
         // Local config remains the deploy-safe fallback when Blob is not provisioned yet.
+        console.error("wedding-content: Blob listing failed", error);
       }
     }
 
-    res.setHeader("Cache-Control", "no-store, max-age=0");
+    // Every guest opening the invitation waits on this call, and each Blob list() is a
+    // billed operation: let Vercel's CDN serve it, refreshing in the background.
+    // Partial results (Blob/Neon failed) are not cached so they can't stick around.
+    res.setHeader(
+      "Cache-Control",
+      blobLoaded ? "public, max-age=0, s-maxage=300, stale-while-revalidate=86400" : "no-store, max-age=0",
+    );
     return sendJson(res, 200, { config, source: { blob: blobLoaded, neon: neonLoaded, galleryCount } });
-  } catch {
+  } catch (error) {
+    console.error("wedding-content: failed", error);
+    res.setHeader("Cache-Control", "no-store, max-age=0");
     return sendJson(res, 200, { config: {}, source: { blob: false, neon: false, galleryCount: 0 } });
   }
 }
