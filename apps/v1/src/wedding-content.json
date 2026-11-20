@@ -16,5 +16,19 @@
   "storyImage": "/data/story_images/story_1.jpg",
   "storyImages": ["/data/story_images/story_1.jpg", "/data/story_images/story_2.jpg", "/data/story_images/story_3.jpg", "/data/story_images/story_4.jpg", "/data/story_images/story_5.jpg", "/data/story_images/story_6.jpg", "/data/story_images/story_7.jpg", "/data/story_images/story_8.jpg"],
   "galleryImages": ["/data/IMG_7737.JPG", "/data/IMG_7739.JPG", "/data/IMG_7740.JPG", "/data/IMG_9526.JPG", "/data/IMG_9527.JPG", "/data/IMG_9528.JPG"],
-  "audioUrl": "/audio/Audio.m4a"
+  "audioUrl": "/audio/Audio.m4a",
+  "galleryConcepts": [
+    { "id": "sunset", "rows": [
+      ["/data/gallery/sunset/01.jpg", "/data/gallery/sunset/02.jpg", "/data/gallery/sunset/03.jpg"]
+    ] },
+    { "id": "garden", "rows": [
+      ["/data/gallery/garden/01.jpg", "/data/gallery/garden/02.jpg"],
+      ["/data/gallery/garden/03.jpg", "/data/gallery/garden/04.jpg", "/data/gallery/garden/05.jpg"],
+      ["/data/gallery/garden/06.jpg", "/data/gallery/garden/07.jpg"]
+    ] },
+    { "id": "studio", "rows": [
+      ["/data/gallery/studio/01.jpg", "/data/gallery/studio/02.jpg", "/data/gallery/studio/04.jpg"],
+      ["/data/gallery/studio/03.jpg", "/data/gallery/studio/05.jpg"]
+    ] }
+  ]
 }

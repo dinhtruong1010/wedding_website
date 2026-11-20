@@ -29,3 +29,9 @@ Thumbs.db
 .idea/
 .vscode/
 .vercel
+
+# Original wedding photo shoots (10-17 MB each). Web-sized copies live in apps/v1/public/data/gallery/.
+apps/v1/public/data/anh_hoang_hon/
+apps/v1/public/data/anh_phim_truong/
+apps/v1/public/data/anh_studio/
+apps/v1/public/data/*.zip

@@ -620,6 +620,50 @@
   content: '';
   transform: rotate(-0.5deg);
 }
+/* Album by photo shoot: each row hangs on its own clothesline. A row of 2 is 2/3 as
+   wide as a row of 3, so every photo in the album is the same size. */
+.gallery-concept + .gallery-concept {
+  margin-top: 1.5rem;
+}
+/* Quiet text-style toggle, right-aligned above the album (still a 44px touch target). */
+.gallery-toggle {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.25rem;
+  color: var(--color-primary);
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: underline;
+  text-decoration-color: rgba(184, 77, 112, 0.35);
+  text-underline-offset: 0.3em;
+  transition: color 180ms ease, text-decoration-color 180ms ease;
+}
+.gallery-toggle:hover {
+  color: #963a5a;
+  text-decoration-color: currentColor;
+}
+.gallery-toggle:focus-visible {
+  border-radius: 0.5rem;
+  outline: 2px solid #e88aa5;
+  outline-offset: 2px;
+}
+
+.gallery-row {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: clamp(0.75rem, 3vw, 2.5rem);
+  width: calc(var(--cols) / 3 * 100%);
+  margin: 0 auto;
+  padding-top: 3rem;
+}
+.gallery-row + .gallery-row {
+  margin-top: 1.5rem;
+}
+
 .gallery-hanging-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
