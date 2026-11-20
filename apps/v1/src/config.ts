@@ -19,7 +19,14 @@ export interface WeddingConfig {
   storyImage: string;
   storyImages: string[];
   galleryImages: string[];
+  /** Album, grouped by photo shoot. Each row is rendered as one line of photos. */
+  galleryConcepts: GalleryConcept[];
   audioUrl: string;
+}
+
+export interface GalleryConcept {
+  id: 'sunset' | 'garden' | 'studio';
+  rows: string[][];
 }
 
 export interface ResponsiveImageSource {
@@ -31,7 +38,7 @@ export interface ResponsiveImageSource {
 const blobBaseUrl = (import.meta.env.VITE_BLOB_PUBLIC_BASE_URL ?? "").replace(/\/$/, "");
 
 export const weddingConfig: WeddingConfig = {
-  ...weddingContent,
+  ...(weddingContent as Omit<WeddingConfig, 'galleryConcepts'> & { galleryConcepts: GalleryConcept[] }),
   ...siteOverrides[siteId],
   storyImages: blobBaseUrl
     ? [

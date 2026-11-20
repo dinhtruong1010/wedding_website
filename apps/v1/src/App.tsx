@@ -4,8 +4,10 @@ import {
   ArrowUp,
   Calendar,
   CalendarPlus,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Clock,
   Download,
   Eye,
@@ -21,7 +23,7 @@ import {
   VolumeX,
   X,
 } from 'lucide-react';
-import { weddingConfig, type ResponsiveImageSource, type WeddingConfig } from './config';
+import { weddingConfig, type GalleryConcept, type ResponsiveImageSource, type WeddingConfig } from './config';
 import { ResponsiveImage, ResponsivePicture, ResponsiveGalleryImage, optimizedSrc } from './components/ResponsiveImage';
 import { CursorEffects } from './components/CursorEffects';
 import { apiUrl, siteId, siteStorageKey } from './site';
@@ -194,7 +196,7 @@ const HeartDivider = () => (
   </div>
 );
 
-const SectionHeading = ({ eyebrow, title, intro }: { eyebrow: string; title: string; intro?: string }) => (
+const SectionHeading = ({ eyebrow, title, intro }: { eyebrow: string; title?: string; intro?: string }) => (
   <motion.div
     initial={{ opacity: 0, y: 24 }}
     whileInView={{ opacity: 1, y: 0 }}
@@ -202,11 +204,21 @@ const SectionHeading = ({ eyebrow, title, intro }: { eyebrow: string; title: str
     transition={{ duration: 0.7, ease: EASE }}
     className="mb-14 text-center md:mb-16"
   >
-    <span className="section-eyebrow">
-      <Heart size={10} fill="currentColor" aria-hidden="true" />
-      {eyebrow}
-    </span>
-    <h2 className="mt-4 font-headline text-4xl leading-tight text-on-surface md:text-5xl">{title}</h2>
+    {title ? (
+      <>
+        <span className="section-eyebrow">
+          <Heart size={10} fill="currentColor" aria-hidden="true" />
+          {eyebrow}
+        </span>
+        <h2 className="mt-4 font-headline text-4xl leading-tight text-on-surface md:text-5xl">{title}</h2>
+      </>
+    ) : (
+      // Eyebrow-only heading: the pill is the section's heading for screen readers.
+      <h2 className="section-eyebrow">
+        <Heart size={10} fill="currentColor" aria-hidden="true" />
+        {eyebrow}
+      </h2>
+    )}
     <HeartDivider />
     {intro ? <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-on-surface-variant">{intro}</p> : null}
   </motion.div>
@@ -1246,10 +1258,38 @@ const slideVariants: Variants = {
   exit: (direction: number) => ({ x: direction >= 0 ? -90 : 90, opacity: 0, scale: 0.97 }),
 };
 
-const PhotoGallery = ({ language, images }: LocalizedProps & { images: string[] }) => {
+/** Photos shown before "View more": the sunset row plus the first two garden rows. */
+const GALLERY_PREVIEW_COUNT = 8;
+
+const PhotoGallery = ({ language, concepts }: LocalizedProps & { concepts: GalleryConcept[] }) => {
   const t = translations[language];
-  const galleryImages = images.slice(0, 6);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const totalCount = concepts.reduce((sum, concept) => sum + concept.rows.flat().length, 0);
+
+  // Whole rows only: a row is shown when it starts before the preview limit.
+  let seen = 0;
+  const visibleConcepts = concepts
+    .map((concept) => ({
+      ...concept,
+      rows: concept.rows.filter((row) => {
+        const start = seen;
+        seen += row.length;
+        return isExpanded || start < GALLERY_PREVIEW_COUNT;
+      }),
+    }))
+    .filter((concept) => concept.rows.length > 0);
+  // The lightbox steps through exactly the photos on screen, in reading order.
+  const galleryImages = visibleConcepts.flatMap((concept) => concept.rows.flat());
   const count = galleryImages.length;
+
+  const toggleExpanded = () => {
+    if (isExpanded) {
+      // The button sits below the album: collapsing removes rows above it, so bring the
+      // album back into view instead of leaving the guest further down the page.
+      document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setIsExpanded((expanded) => !expanded);
+  };
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
   const [direction, setDirection] = useState(0);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -1297,36 +1337,55 @@ const PhotoGallery = ({ language, images }: LocalizedProps & { images: string[] 
   return (
     <section id="gallery" ref={sectionRef} data-visible={isVisible} className="gallery-section overflow-hidden px-6 py-24 md:py-28">
       <div className="mx-auto max-w-7xl">
-        <SectionHeading eyebrow={t.gallery.eyebrow} title={t.gallery.title} />
+        <SectionHeading eyebrow={t.gallery.title} />
 
-        <div className="gallery-featured-grid mx-auto max-w-3xl">
-          {galleryImages.slice(0, 2).map((src, index) => (
-            <GalleryPhoto
-              key={src}
-              src={src}
-              index={index}
-              alt={`${t.gallery.altPrefix} ${index + 1}`}
-              onSelect={() => open(index)}
-              featured
-              openLabel={t.gallery.open}
-            />
-          ))}
+        <div className="mx-auto max-w-4xl">
+          <AnimatePresence initial={false}>
+            {visibleConcepts.map((concept) => (
+              <motion.div
+                key={concept.id}
+                layout="position"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5, ease: EASE }}
+                className="gallery-concept"
+              >
+                {concept.rows.map((row) => (
+                  <motion.div
+                    key={row[0]}
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: EASE }}
+                    className="gallery-clothesline gallery-row"
+                    style={{ '--cols': row.length } as React.CSSProperties}
+                  >
+                    {row.map((src) => {
+                      const index = galleryImages.indexOf(src);
+                      return (
+                        <GalleryPhoto
+                          key={src}
+                          src={src}
+                          index={index}
+                          alt={`${t.gallery.altPrefix} ${index + 1}`}
+                          onSelect={() => open(index)}
+                          openLabel={t.gallery.open}
+                        />
+                      );
+                    })}
+                  </motion.div>
+                ))}
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
 
-        {count > 2 ? (
-          <div className="gallery-clothesline mt-14 pt-12">
-            <div className="gallery-hanging-grid">
-              {galleryImages.slice(2).map((src, index) => (
-                <GalleryPhoto
-                  key={src}
-                  src={src}
-                  index={index + 2}
-                  alt={`${t.gallery.altPrefix} ${index + 3}`}
-                  onSelect={() => open(index + 2)}
-                  openLabel={t.gallery.open}
-                />
-              ))}
-            </div>
+        {totalCount > GALLERY_PREVIEW_COUNT ? (
+          <div className="mx-auto mt-6 flex max-w-4xl justify-center">
+            <button type="button" onClick={toggleExpanded} aria-expanded={isExpanded} className="gallery-toggle">
+              {isExpanded ? t.gallery.showLess : t.gallery.showAll}
+              {isExpanded ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
+            </button>
           </div>
         ) : null}
       </div>
@@ -1915,7 +1974,7 @@ export default function App() {
           {heroReady ? <Hero language={language} heroImages={mediaConfig.heroImages} isOpened={isOpened} /> : <HeroPlaceholder />}
           <OurStory language={language} storyImages={activeConfig.storyImages} />
           <WeddingDetails language={language} />
-          <PhotoGallery language={language} images={activeConfig.galleryImages} />
+          <PhotoGallery language={language} concepts={weddingConfig.galleryConcepts} />
           <Gifts language={language} groomQr={activeConfig.groomGiftQrCode} brideQr={activeConfig.brideGiftQrCode} />
           <RsvpAndWishes
             language={language}
